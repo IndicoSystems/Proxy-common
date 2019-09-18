@@ -3,14 +3,29 @@ package metadata
 import "strings"
 
 const (
-	UserId      = "userid"
-	ParentName  = "parentname"
-	ParentId    = "parentid"
-	CreatedAt   = "createdat"
-	FileType    = "filetype"
+	// The ID of the user the file belongs to.
+	UserId = "userid"
+
+	// The name of the container the file belongs to.
+	ParentName = "parentname"
+
+	// The ID of the container the file belongs to.
+	ParentId = "parentid"
+
+	// The RFC3339 compliant timestamp at which the file was created.
+	CreatedAt = "createdat"
+
+	// The mime type of the file.
+	FileType = "filetype"
+
+	// The name given to the file by the user.
 	DisplayName = "displayname"
-	Checksum    = "checksum"
-	Filename    = "filename"
+
+	// The checksum of the file.
+	Checksum = "checksum"
+
+	// The name of the file on the file system.
+	Filename = "filename"
 )
 
 type Metadata map[string]string
