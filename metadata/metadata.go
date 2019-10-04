@@ -1,6 +1,8 @@
 package metadata
 
-import "strings"
+import (
+	"strings"
+)
 
 const (
 	// The ID of the user the file belongs to.
@@ -26,6 +28,9 @@ const (
 
 	// The name of the file on the file system.
 	Filename = "filename"
+
+	// The ID of the file at the external party
+	ExtId = "extid"
 )
 
 type Metadata map[string]string
