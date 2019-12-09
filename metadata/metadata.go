@@ -23,6 +23,9 @@ const (
 	// The name given to the file by the user.
 	DisplayName = "displayname"
 
+	// Description given to the file
+	Description = "description"
+
 	// The checksum of the file.
 	Checksum = "checksum"
 
