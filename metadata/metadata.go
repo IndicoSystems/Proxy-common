@@ -360,7 +360,7 @@ func (m Metadata) Get(key string) string {
 	}
 	for k, v := range m {
 		if strings.ToLower(k) == lk {
-			l.Warnf("Return for-loop, this is aff deprecated behaviour, %s, %v", key, m[lk])
+			l.Warnf("Return for-loop, this is a deprecated behaviour, %s, %v", key, m[lk])
 			return strings.TrimSpace(v)
 		}
 	}
