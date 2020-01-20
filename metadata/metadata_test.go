@@ -48,13 +48,13 @@ func TestMetadata_ConvertToType(t *testing.T) {
 	tests := []struct {
 		name string
 		m    Metadata
-		want Type
+		want UploadMetadata
 	}{
 		// TODO: Add test cases.
 		{
 			"Should not fail on empty values",
 			Metadata{},
-			Type{},
+			UploadMetadata{},
 		},
 	}
 	for _, tt := range tests {
@@ -95,17 +95,17 @@ func TestType_ConvertToMetaData(t1 *testing.T) {
 	createdat := time.Date(2019, 12, 24, 0, 0, 0, 0, time.UTC)
 	tests := []struct {
 		name   string
-		fields Type
+		fields UploadMetadata
 		want   Metadata
 	}{
 		{
 			"Should not fail on empty values",
-			Type{},
+			UploadMetadata{},
 			Metadata{},
 		},
 		{
 			"Should not fail on basic values",
-			Type{
+			UploadMetadata{
 				GroupId:   "1234",
 				CreatedAt: &createdat,
 			},
@@ -116,7 +116,7 @@ func TestType_ConvertToMetaData(t1 *testing.T) {
 		},
 		{
 			"should parse all fields correctly",
-			Type{
+			UploadMetadata{
 				UserId: "1111",
 				Parent: Parent{
 					Id:          "1234",
@@ -227,6 +227,10 @@ func TestType_ConvertToMetaData(t1 *testing.T) {
 			t := tt.fields
 			got := t.ConvertToMetaData()
 			if diff := deep.Equal(got, tt.want); diff != nil {
+				// Because nested values are Base64, lets unwrap them to get a clear picture of the diff
+				if diffPerson := deep.Equal(got.GetPerson(), tt.want.GetPerson()); diffPerson != nil {
+					t1.Errorf("Person did not match wanted result: \n diff %+v", diffPerson)
+				}
 				t1.Errorf("Did not match wanted result: \n diff %+v, \nGot: %+v, \nWanted: %+v", diff, got, tt.want)
 			}
 			m := got.ConvertToType()

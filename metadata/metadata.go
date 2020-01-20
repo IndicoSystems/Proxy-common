@@ -7,6 +7,7 @@ import (
 	"github.com/indicosystems/proxy/logger"
 	"github.com/sirupsen/logrus"
 	"strings"
+
 	"time"
 )
 
@@ -112,135 +113,14 @@ const (
 	ClientMediaId = "clientmediaid"
 )
 
-type Person struct {
-	FirstName   string `json:"firstName"`
-	LastName    string `json:"lastName"`
-	Id          string `json:"id"`
-	Dob         string `json:"dob"`
-	Gender      string `json:"gender"`
-	Nationality string `json:"nationality"`
-	Workplace   string `json:"workplace"`
-	Status      string `json:"status"`
-	Address     string `json:"address"`
-	ZipCode     int    `json:"zip"`
-	Country     string `json:"country"`
-	WorkPhone   string `json:"workPhone"`
-	Phone       string `json:"phone"`
-	Mobile      string `json:"mobile"`
-	Present     bool   `json:"isPresent"`
-}
-
-type Parent struct {
-	Id          string
-	Name        string
-	Description string
-}
-
-type Creator struct {
-	District string
-	Person
-}
-
-type Type struct {
-	UserId        string
-	Parent        Parent
-	CreatedAt     *time.Time
-	CapturedAt    *time.Time
-	FileType      string
-	DisplayName   string
-	Description   string
-	Checksum      MetaChecksum
-	FileName      string
-	ExtId         string
-	CaseNumber    string
-	Duration      string
-	Creator       Creator
-	Location      Location
-	Subject       []Person
-	AccountName   string
-	EquipmentId   string
-	InterviewType string
-	Bookmarks     string
-	Attachments   string
-	Notes         string
-	ClientMediaId string
-	GroupId       string
-	GroupName     string
-}
-
-type MetaChecksum struct {
-	Value        string
-	ChecksumType string
-}
-
-type Location struct {
-	Text      string
-	Latitude  string
-	Longitude string
+type Upl struct {
+	UploadMetadata
 }
 
 var l logrus.FieldLogger = logger.Get("metadata")
 
 type Metadata map[string]string
 type Mapper func(data Metadata) Metadata
-
-func (t Type) ConvertToMetaData() Metadata {
-	// TODO: Some of these nested types will result in error if empty
-	m := Metadata{}
-
-	m.Set(AccountName, t.AccountName)
-	m.Set(CaseNumber, t.CaseNumber)
-	if t.CreatedAt != nil {
-		m.Set(CreatedAt, t.CreatedAt.Format(time.RFC3339))
-	}
-	if t.CapturedAt != nil {
-		m.Set(CapturedAt, t.CapturedAt.Format(time.RFC3339))
-	}
-	if t.Subject != nil {
-
-		sJ, err := json.Marshal(t.Subject)
-		if err != nil {
-			l.Errorf("There was a problems Marhsalling the subjects-fields")
-		} else if len(sJ) > 0 {
-			subjects := base64.StdEncoding.EncodeToString(sJ)
-			if subjects != "" {
-				m.Set(Subjects, string(subjects))
-			}
-		}
-	}
-
-	m.Set(ClientMediaId, t.ClientMediaId)
-	m.Set(CreatorSurname, t.Creator.LastName)
-	m.Set(CreatorDistrict, t.Creator.District)
-	m.Set(GroupID, t.GroupId)
-	m.Set(GroupName, t.GroupName)
-	m.Set(ParentDescription, t.Parent.Description)
-	m.Set(ParentName, t.Parent.Name)
-	m.Set(Duration, t.Duration)
-	m.Set(FileType, t.FileType)
-	m.Set(DisplayName, t.DisplayName)
-	m.Set(Description, t.Description)
-	m.Set(Checksum, t.Checksum.Value)
-	m.Set(ChecksumType, t.Checksum.ChecksumType)
-	m.Set(Filename, t.FileName)
-	m.Set(ExtId, t.ExtId)
-	m.Set(LocationText, t.Location.Text)
-	m.Set(ParentId, t.Parent.Id)
-	m.Set(Longitude, t.Location.Longitude)
-	m.Set(Latitude, t.Location.Latitude)
-	m.Set(UserId, t.UserId)
-	m.Set(EquipmentID, t.EquipmentId)
-	m.Set(InterviewType, t.InterviewType)
-	m.Set(Notes, t.Notes)
-	// TODO:; Map atatchments, booksmarks.
-	for key, val := range m {
-		if val == "" {
-			delete(m, key)
-		}
-	}
-	return m
-
-}
 
 func (m Metadata) GetCreatedAtTime() *time.Time {
 	return parseDateSafely(m.getExact(CreatedAt))
@@ -262,8 +142,8 @@ func parseDateSafely(v string) *time.Time {
 	return &t
 }
 
-func (m Metadata) ConvertToType() Type {
-	return Type{
+func (m Metadata) ConvertToType() UploadMetadata {
+	return UploadMetadata{
 		ClientMediaId: m.getExact(ClientMediaId),
 		GroupId:       m.getExact(GroupID),
 		GroupName:     m.getExact(GroupName),
