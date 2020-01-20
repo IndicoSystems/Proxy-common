@@ -111,6 +111,12 @@ const (
 
 	// A unique identifier on the client. With attachments, this field is required.
 	ClientMediaId = "clientmediaid"
+
+	// Etc
+	Etcetera = "etc"
+
+	// SSN
+	SSN = "ssn"
 )
 
 type Upl struct {
@@ -123,10 +129,10 @@ type Metadata map[string]string
 type Mapper func(data Metadata) Metadata
 
 func (m Metadata) GetCreatedAtTime() *time.Time {
-	return parseDateSafely(m.getExact(CreatedAt))
+	return parseDateSafely(m.GetExact(CreatedAt))
 }
 func (m Metadata) GetCapturedAtTime() *time.Time {
-	return parseDateSafely(m.getExact(CapturedAt))
+	return parseDateSafely(m.GetExact(CapturedAt))
 }
 
 // Parses a ISO-8601-compliant string into a native time.
@@ -144,69 +150,96 @@ func parseDateSafely(v string) *time.Time {
 
 func (m Metadata) ConvertToType() UploadMetadata {
 	return UploadMetadata{
-		ClientMediaId: m.getExact(ClientMediaId),
-		GroupId:       m.getExact(GroupID),
-		GroupName:     m.getExact(GroupName),
-		UserId:        m.getExact(UserId),
+		ClientMediaId: m.GetExact(ClientMediaId),
+		GroupId:       m.GetExact(GroupID),
+		GroupName:     m.GetExact(GroupName),
+		UserId:        m.GetExact(UserId),
 		Parent: Parent{
-			Id:          m.getExact(ParentId),
-			Name:        m.getExact(ParentName),
-			Description: m.getExact(ParentDescription),
+			Id:          m.GetExact(ParentId),
+			Name:        m.GetExact(ParentName),
+			Description: m.GetExact(ParentDescription),
 		},
 		CreatedAt:   m.GetCreatedAtTime(),
 		CapturedAt:  m.GetCapturedAtTime(),
-		Duration:    m.getExact(Duration),
-		FileType:    m.getExact(FileType),
-		DisplayName: m.getExact(DisplayName),
-		Description: m.getExact(Description),
+		Duration:    m.GetExact(Duration),
+		FileType:    m.GetExact(FileType),
+		DisplayName: m.GetExact(DisplayName),
+		Description: m.GetExact(Description),
 		Checksum:    m.GetChecksum(),
-		FileName:    m.getExact(Filename),
-		ExtId:       m.getExact(ExtId),
-		CaseNumber:  m.getExact(CaseNumber),
+		FileName:    m.GetExact(Filename),
+		ExtId:       m.GetExact(ExtId),
+		CaseNumber:  m.GetExact(CaseNumber),
 		Creator: Creator{
-			District: m.getExact(CreatorDistrict),
-			Person:   Person{LastName: m.getExact(CreatorSurname)},
+			District: m.GetExact(CreatorDistrict),
+			Person:   Person{LastName: m.GetExact(CreatorSurname)},
 		},
 		Location: Location{
-			Text:      m.getExact(LocationText),
-			Latitude:  m.getExact(Latitude),
-			Longitude: m.getExact(Longitude),
+			Text:      m.GetExact(LocationText),
+			Latitude:  m.GetExact(Latitude),
+			Longitude: m.GetExact(Longitude),
 		},
 		Subject:       m.GetPerson(),
-		AccountName:   m.getExact(AccountName),
-		EquipmentId:   m.getExact(EquipmentID),
-		InterviewType: m.getExact(InterviewType),
-		Bookmarks:     m.getExact(Bookmarks),   // TODO: parse
-		Attachments:   m.getExact(Attachments), // TODO: parse
-		Notes:         m.getExact(Notes),
+		AccountName:   m.GetExact(AccountName),
+		EquipmentId:   m.GetExact(EquipmentID),
+		InterviewType: m.GetExact(InterviewType),
+		Bookmarks:     m.GetExact(Bookmarks),   // TODO: parse
+		Attachments:   m.GetExact(Attachments), // TODO: parse
+		Notes:         m.GetExact(Notes),
+		Etc:           m.GetEtc(),
+		SSN:           m.GetSsn(),
 	}
 }
+
+type Etc map[string]interface{}
 
 func (m Metadata) GetChecksum() MetaChecksum {
 	return MetaChecksum{
-		Value:        m.getExact(Checksum),
-		ChecksumType: m.getExact(ChecksumType),
+		Value:        m.GetExact(Checksum),
+		ChecksumType: m.GetExact(ChecksumType),
 	}
 }
 
-func (m Metadata) GetPerson() []Person {
-	str := m.Get(Subjects)
+func (m Metadata) GetLocation() Location {
+	return Location{
+		Text:      m.GetExact(LocationText),
+		Latitude:  m.GetExact(Latitude),
+		Longitude: m.GetExact(Longitude),
+	}
+}
+
+// Helper for getting nested objects
+func (m Metadata) getNested(key string, v interface{}) error {
+	str := m.Get(key)
 	if str == "" {
 		return nil
 	}
 	sDec, err := base64.StdEncoding.DecodeString(str)
 	if err != nil {
-		return nil
+		return err
 	}
-	var ps []Person
-	err = json.Unmarshal([]byte(sDec), &ps)
+	err = json.Unmarshal(sDec, &v)
 	if err != nil {
-		return nil
+		return err
 	}
-	return ps
+	return nil
 
 }
-func (m Metadata) getExact(key string) string {
+
+func (m Metadata) GetPerson() (ps []Person) {
+	m.getNested(Subjects, &ps)
+	return
+}
+func (m Metadata) GetEtc() (etc Etc) {
+	m.getNested(Etcetera, &etc)
+	return
+}
+
+// TODO: Map to correct ssn-structure
+func (m Metadata) GetSsn() (ssn *map[string]interface{}) {
+	m.getNested(SSN, &ssn)
+	return
+}
+func (m Metadata) GetExact(key string) string {
 	if val, ok := m[key]; ok {
 		return strings.TrimSpace(val)
 	}
@@ -217,13 +250,13 @@ func (m Metadata) getExact(key string) string {
 }
 
 func (m Metadata) GetFileName() string {
-	return m.getExact(Filename)
+	return m.GetExact(Filename)
 }
 
 // Can be used to get key/values with fallbacks. The keys to the left have precedence.
 func (m Metadata) Fallbacks(keys ...string) string {
 	for _, k := range keys {
-		if v := m.getExact(k); v != "" {
+		if v := m.GetExact(k); v != "" {
 			return v
 		}
 	}

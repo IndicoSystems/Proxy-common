@@ -60,6 +60,11 @@ type UploadMetadata struct {
 	GroupId string
 	// Name of any backend-group. Providing it will create a groupName, if supported by the backend.
 	GroupName string
+	// Any custom-field. Should only be used for customer-specific fields that do not fit in any other field. Before use, please request Indico to add your required fields.
+	Etc map[string]interface{} `json:"etc,omitempty"`
+	// Reserved for SSN-compliant JSON from legacy-systems. Beware, adding this field to a request will change the behaviour of Proxy for the upload.
+	// This is necessary because of the custom-behaviour of the SSN-data.
+	SSN *map[string]interface{} `json:"ssn,omitempty"`
 }
 
 type Person struct {
@@ -123,14 +128,35 @@ func (t UploadMetadata) ConvertToMetaData() Metadata {
 		m.Set(CapturedAt, t.CapturedAt.Format(time.RFC3339))
 	}
 	if t.Subject != nil {
-
 		sJ, err := json.Marshal(t.Subject)
 		if err != nil {
-			l.Errorf("There was a problems Marhsalling the subjects-fields")
+			l.Errorf("There was a problem Marhsalling the subjects-field")
 		} else if len(sJ) > 0 {
 			subjects := base64.StdEncoding.EncodeToString(sJ)
 			if subjects != "" {
 				m.Set(Subjects, string(subjects))
+			}
+		}
+	}
+	if t.Etc != nil {
+		sJ, err := json.Marshal(t.Etc)
+		if err != nil {
+			l.Errorf("There was a problem Marhsalling the Etc-fields")
+		} else if len(sJ) > 0 {
+			etc := base64.StdEncoding.EncodeToString(sJ)
+			if etc != "" {
+				m.Set(Etcetera, string(etc))
+			}
+		}
+	}
+	if t.SSN != nil {
+		sJ, err := json.Marshal(t.SSN)
+		if err != nil {
+			l.Errorf("There was a problem Marhsalling the SSN-field")
+		} else if len(sJ) > 0 {
+			ssn := base64.StdEncoding.EncodeToString(sJ)
+			if ssn != "" {
+				m.Set(SSN, string(ssn))
 			}
 		}
 	}

@@ -188,6 +188,14 @@ func TestType_ConvertToMetaData(t1 *testing.T) {
 				Notes:         "Some random notes",
 				ClientMediaId: "1234",
 				GroupId:       "4321",
+				Etc: map[string]interface{}{
+					"string": "batman",
+					"array":  []interface{}{"Alice", "Bob", "Eve"},
+					"nested": map[string]interface{}{
+						"more_strings": "stringy",
+						"yes":          false,
+					},
+				},
 			},
 			Metadata{
 				Subjects:      "W3siZmlyc3ROYW1lIjoiVW5rbm93biIsImxhc3ROYW1lIjoiU2lnbWEiLCJpZCI6IjY2NiIsImRvYiI6InVua25vd24iLCJnZW5kZXIiOiJNYWxlIiwibmF0aW9uYWxpdHkiOiJBbWVyaWNhbiIsIndvcmtwbGFjZSI6Ik1hdmVyaWNrIEh1bnRlcnMiLCJzdGF0dXMiOiJTdXNwZWN0IiwiYWRkcmVzcyI6IlVua25vd24iLCJ6aXAiOjAsImNvdW50cnkiOiJVU0EiLCJ3b3JrUGhvbmUiOiI2Nzg2NzYyIiwicGhvbmUiOiIxMjY3MzYzIiwibW9iaWxlIjoiMTYyMzYzIiwiaXNQcmVzZW50Ijp0cnVlfV0=",
@@ -219,6 +227,7 @@ func TestType_ConvertToMetaData(t1 *testing.T) {
 				LocationText:      "Some place",
 				GroupID:           "4321",
 				Filename:          "01.jpeg",
+				Etcetera:          "eyJhcnJheSI6WyJBbGljZSIsIkJvYiIsIkV2ZSJdLCJuZXN0ZWQiOnsibW9yZV9zdHJpbmdzIjoic3RyaW5neSIsInllcyI6ZmFsc2V9LCJzdHJpbmciOiJiYXRtYW4ifQ==",
 			},
 		},
 	}
@@ -235,6 +244,7 @@ func TestType_ConvertToMetaData(t1 *testing.T) {
 			}
 			m := got.ConvertToType()
 			if diff := deep.Equal(m, t); diff != nil {
+				t1.Logf("\n'%+v' \n'%+v'", got.GetEtc(), tt.want.GetEtc())
 				t1.Errorf("Convert to metadata and back again did not produce the same result\n diff: %+v \nGot: %+v \n Expected result: %+v", diff, m, t)
 			}
 			//if !reflect.DeepEqual(got, tt.want) {
