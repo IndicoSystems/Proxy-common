@@ -104,7 +104,7 @@ const (
 	GroupID = "groupid"
 	// If a group should be created/found on backend, this can be used to search for it.
 	// Note that GroupID is required anyway.
-	GroupName = "groupnam"
+	GroupName = "groupname"
 
 	// Any additional notes
 	Notes = "notes"
