@@ -117,6 +117,10 @@ const (
 
 	// SSN
 	SSN = "ssn"
+	// DeferId - Internal use for deferred uploads
+	DeferId = "__deferId"
+	// DeferredFiledId - Internal use for deferred uploads
+	DeferFileId = "__deferFileId"
 )
 
 type Upl struct {
