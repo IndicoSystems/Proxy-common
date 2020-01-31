@@ -66,7 +66,7 @@ const (
 	// Textual representation of the location, like Madrid, or street address
 	LocationText = "locationtext"
 
-	// Tags for the item
+	// Tags for the item, comma-separated
 	Tags = "tags"
 
 	// Geo-Latitude.
@@ -77,27 +77,11 @@ const (
 
 	Subjects = "subjects"
 
-	SubjectFirstName   = "subjectfirstname"
-	SubjectLastName    = "subjectlastname" // IR kaller dette SessionCustomerName ??
-	SubjectId          = "subjectid"       // Personnummer etc.
-	SubjectBirthdate   = "subjectbirthdate"
-	SubjectGender      = "subjectgender"
-	SubjectNationality = "subjectnationality"
-	SubjectWorkplace   = "subjectworkplace"
-	SubjectStatus      = "subjectstatus" // – Indikerer om subjektet er et vitne, offer, etc.
-	SubjectAddress     = "subjectaddress"
-	SubjectZip         = "subjectzip"
-	SubjectPostalCode  = "subjectpostalcode" // – IR: SessionCustomerIndex
-	SubjectCountry     = "subjectcountry"    // – Land for adresse
-	SubjectWorkPhone   = "subjectworkphone"
-	SubjectPhone       = "subjectphone"
-	SubjectMobile      = "subjectmobile"
-	SubjectPresent     = "subjectpresent" // – Er subjektet tilstede? boolean
-	AccountName        = "accountname"    // – IR: windows-kontoen
-	EquipmentID        = "equipmentid"    // – IR: InforPrefQuipmentID / DeviceInfo ?? også feltetd CustomDriverxbDeviceType
-	InterviewType      = "interviewtype"  // Itervju, avhør, etc.
-	Bookmarks          = "bookmarks"      // JSON
-	Attachments        = "attachments"    // id'er til ClientMediaID? hmm...
+	AccountName   = "accountname"   // – IR: windows-kontoen
+	EquipmentID   = "equipmentid"   // – IR: InforPrefQuipmentID / DeviceInfo ?? også feltetd CustomDriverxbDeviceType
+	InterviewType = "interviewtype" // Itervju, avhør, etc.
+	Bookmarks     = "bookmarks"
+	Attachments   = "attachments" // id'er til ClientMediaID? hmm...
 	// A group-id can be specified by the client, if these items should be grouped.
 	// All uploads that share this key will be grouped. Not all backends supports this.
 	// This groupId is only used to link the files together, it is not stored on the backend.
@@ -153,48 +137,73 @@ func parseDateSafely(v string) *time.Time {
 }
 
 func (m Metadata) ConvertToType() UploadMetadata {
-	return UploadMetadata{
+	checksum := m.GetChecksum()
+	bookmarks := m.GetBookmarks()
+	u := UploadMetadata{
 		ClientMediaId: m.GetExact(ClientMediaId),
 		GroupId:       m.GetExact(GroupID),
 		GroupName:     m.GetExact(GroupName),
 		UserId:        m.GetExact(UserId),
-		Parent: Parent{
+		Parent: &Parent{
 			Id:          m.GetExact(ParentId),
 			Name:        m.GetExact(ParentName),
 			Description: m.GetExact(ParentDescription),
 		},
-		CreatedAt:   m.GetCreatedAtTime(),
-		CapturedAt:  m.GetCapturedAtTime(),
-		Duration:    m.GetExact(Duration),
-		FileType:    m.GetExact(FileType),
-		DisplayName: m.GetExact(DisplayName),
-		Description: m.GetExact(Description),
-		Checksum:    m.GetChecksum(),
-		FileName:    m.GetExact(Filename),
-		ExtId:       m.GetExact(ExtId),
-		CaseNumber:  m.GetExact(CaseNumber),
-		Creator: Creator{
-			District: m.GetExact(CreatorDistrict),
-			Person:   Person{LastName: m.GetExact(CreatorSurname)},
-		},
-		Location: Location{
-			Text:      m.GetExact(LocationText),
-			Latitude:  m.GetExact(Latitude),
-			Longitude: m.GetExact(Longitude),
-		},
+		CreatedAt:     m.GetCreatedAtTime(),
+		CapturedAt:    m.GetCapturedAtTime(),
+		Duration:      m.GetExact(Duration),
+		FileType:      m.GetExact(FileType),
+		DisplayName:   m.GetExact(DisplayName),
+		Description:   m.GetExact(Description),
+		Checksum:      &checksum,
+		FileName:      m.GetExact(Filename),
+		ExtId:         m.GetExact(ExtId),
+		CaseNumber:    m.GetExact(CaseNumber),
 		Subject:       m.GetPerson(),
 		AccountName:   m.GetExact(AccountName),
 		EquipmentId:   m.GetExact(EquipmentID),
 		InterviewType: m.GetExact(InterviewType),
-		Bookmarks:     m.GetExact(Bookmarks),   // TODO: parse
-		Attachments:   m.GetExact(Attachments), // TODO: parse
+		Bookmarks:     &bookmarks,
 		Notes:         m.GetExact(Notes),
 		Etc:           m.GetEtc(),
 		SSN:           m.GetSsn(),
 	}
+
+	creator := Creator{
+		District: m.GetExact(CreatorDistrict),
+		Person:   Person{LastName: m.GetExact(CreatorSurname)},
+	}
+	if creator != (Creator{}) {
+		u.Creator = &creator
+	}
+	location := m.GetLocation()
+	if location != nil {
+		u.Location = location
+	}
+	subject := m.GetPerson()
+	if subject != nil {
+		u.Subject = subject
+	}
+	return u
 }
 
-type Etc map[string]interface{}
+// Etc er unmapped metadata. In Indico Gateway, these represent an organizational-form.
+type Etc struct {
+	// The metadata-key.
+	Key string `xml:",omitempty"`
+	// The id of the field, where available.
+	FieldId string `xml:",omitempty"`
+	// The key used to get the translated VisualName, where available.
+	TranslationKey string `xml:",omitempty"`
+	// The visual name, as reported by the client.
+	VisualName string `xml:",omitempty"`
+	// The value of the field, e.g. the user-input
+	Value string `xml:""`
+	// Marks whether or not field is required or not.
+	Required bool `xml:",omitempty"`
+	// The kind of data in the Value-field.
+	DataType string `xml:",omitempty"`
+}
 
 func (m Metadata) GetChecksum() MetaChecksum {
 	return MetaChecksum{
@@ -203,16 +212,22 @@ func (m Metadata) GetChecksum() MetaChecksum {
 	}
 }
 
-func (m Metadata) GetLocation() Location {
-	return Location{
+func (m Metadata) GetLocation() *Location {
+
+	l := Location{
 		Text:      m.GetExact(LocationText),
 		Latitude:  m.GetExact(Latitude),
 		Longitude: m.GetExact(Longitude),
 	}
+	if l == (Location{}) {
+		return nil
+	}
+	return &l
 }
 
 // Helper for getting nested objects
 func (m Metadata) getNested(key string, v interface{}) error {
+
 	str := m.Get(key)
 	if str == "" {
 		return nil
@@ -226,14 +241,34 @@ func (m Metadata) getNested(key string, v interface{}) error {
 		return err
 	}
 	return nil
-
 }
 
-func (m Metadata) GetPerson() (ps []Person) {
-	m.getNested(Subjects, &ps)
+// Bookmark object belonging to a certain recording.
+type Bookmark struct {
+	CreationDate  string
+	ID            string
+	Title         string
+	StartPosition int
+	EndPosition   int
+}
+
+func (m Metadata) GetBookmarks() (bm []Bookmark) {
+	m.getNested(Bookmarks, &bm)
 	return
 }
-func (m Metadata) GetEtc() (etc Etc) {
+func (m Metadata) GetPerson() *[]Person {
+	var ps []Person
+	m.getNested(Subjects, &ps)
+	for _, p := range ps {
+		p.Country = "bob"
+		if (Person{} != p) {
+			return &ps
+		}
+
+	}
+	return nil
+}
+func (m Metadata) GetEtc() (etc *[]Etc) {
 	m.getNested(Etcetera, &etc)
 	return
 }

@@ -3,6 +3,7 @@ package metadata
 import (
 	"encoding/base64"
 	"encoding/json"
+	"strings"
 	"time"
 )
 
@@ -13,106 +14,121 @@ import (
 // or doing a OPTIONS-request to its root.
 type UploadMetadata struct {
 	// A unique identifier for the user in the backend-system
-	UserId string
+	UserId string `xml:",omitempty"`
 	// The parent of this media.
-	Parent Parent
+	Parent *Parent `xml:",omitempty"`
 	// The time of which the media was created in the backend-database
-	CreatedAt *time.Time
+	CreatedAt *time.Time `xml:",omitempty"`
 	// The time of which the media was created by the user, on the client.
-	CapturedAt *time.Time
+	CapturedAt *time.Time `xml:",omitempty"`
 	// The fileType, as in MimeType. Example: 'image/jpeg' or 'video/mp4'
-	FileType string
+	FileType string `xml:",omitempty"`
 	// A short description of the current file, submitted by the user
-	DisplayName string
+	DisplayName string `xml:",omitempty"`
 	// A longer description of the current file, submitted by the uer.
-	Description string
+	Description string `xml:",omitempty"`
 	// Any checksums already calculated by the client.
-	Checksum MetaChecksum
+	Checksum *MetaChecksum `xml:",omitempty"`
 	// The filename,
-	FileName string
+	FileName string `xml:",omitempty"`
+	// Tags
+	Tags []string `xml:",omitempty"`
 	// The backend-database ID of the current file. Provide if updating metadata.
-	ExtId string
+	ExtId string `xml:",omitempty"`
 	// A case-number returned by the user
-	CaseNumber string
+	CaseNumber string `xml:",omitempty"`
 	// Duration of the media, if audio or video. Int64. Should be in milliseconds when sending.
-	Duration string
+	Duration string `xml:",omitempty"`
 	// The creator of the current file, as in the current user, interviewer etc.
-	Creator Creator
+	Creator *Creator `xml:",omitempty"`
 	// The location of the captured media
-	Location Location
+	Location *Location `xml:",omitempty"`
 	// Any subjects in the captured media.
-	Subject []Person
+	Subject *[]Person `json:"subjects,omitempty" xml:",omitempty`
 	// TBD
-	AccountName string
+	AccountName string `xml:",omitempty"`
 	// TBD
-	EquipmentId string
+	EquipmentId string `xml:",omitempty"`
 	// TBD
-	InterviewType string
+	InterviewType string      `xml:",omitempty"`
+	Bookmarks     *[]Bookmark `xml:",omitempty"`
 	// TBD
-	Bookmarks string
-	// TBD
-	Attachments string
-	// TBD
-	Notes string
+	Notes string `xml:",omitempty"`
 	// A unique identifier of the file on the client.
-	ClientMediaId string
+	ClientMediaId string `xml:",omitempty"`
 	// Id of any backend-provided Group-id
-	GroupId string
-	// Name of any backend-group. Providing it will create a groupName, if supported by the backend.
-	GroupName string
+	GroupId string `xml:",omitempty"`
+	// Name of any backend-group. Providing it will c reate a groupName, if supported by the backend.
+	GroupName string `xml:",omitempty"`
 	// Any custom-field. Should only be used for customer-specific fields that do not fit in any other field. Before use, please request Indico to add your required fields.
-	Etc map[string]interface{} `json:"etc,omitempty"`
+	Etc *[]Etc `json:"etc,omitempty xml:Etc"`
 	// Reserved for SSN-compliant JSON from legacy-systems. Beware, adding this field to a request will change the behaviour of Proxy for the upload.
 	// This is necessary because of the custom-behaviour of the SSN-data.
-	SSN *map[string]interface{} `json:"ssn,omitempty"`
+	SSN *map[string]interface{} `json:"ssn,omitempty" xml:-`
 }
 
 type Person struct {
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	Id        string `json:"id"`
+	FirstName string `json:"firstName" xml:",omitempty"`
+	LastName  string `json:"lastName" xml:",omitempty"`
+	Id        string `json:"id" xml:",omitempty"`
 	// Date of birth
-	Dob         string `json:"dob"`
-	Gender      string `json:"gender"`
-	Nationality string `json:"nationality"`
-	Workplace   string `json:"workplace"`
+	Dob         string `json:"dob" xml:",omitempty"`
+	Gender      string `json:"gender" xml:",omitempty"`
+	Nationality string `json:"nationality" xml:",omitempty"`
+	Workplace   string `json:"workplace" xml:",omitempty"`
 	// TBD
-	Status    string `json:"status"`
-	Address   string `json:"address"`
-	ZipCode   int    `json:"zip"`
-	Country   string `json:"country"`
-	WorkPhone string `json:"workPhone"`
-	Phone     string `json:"phone"`
-	Mobile    string `json:"mobile"`
+	Status    string `json:"status" xml:",omitempty"`
+	Address   string `json:"address" xml:",omitempty"`
+	ZipCode   int    `json:"zip" xml:",omitempty"`
+	Country   string `json:"country" xml:",omitempty"`
+	WorkPhone string `json:"workPhone" xml:",omitempty"`
+	Phone     string `json:"phone" xml:",omitempty"`
+	Mobile    string `json:"mobile" xml:",omitempty"`
 	// TBD
-	Present bool `json:"isPresent"`
+	Present bool `json:"isPresent" xml:",omitempty"`
 }
 
 type Parent struct {
-	Id          string
-	Name        string
-	Description string
+	Id          string `xml:",omitempty"`
+	Name        string `xml:",omitempty"`
+	Description string `xml:",omitempty"`
 }
 
 type Creator struct {
-	District string
-	Person
+	District string `xml:",omitempty"`
+	Person   `xml:",omitempty"`
 }
 
 type MetaChecksum struct {
 	// The raw value of any checksum
-	Value string
+	Value string `xml:",omitempty"`
 	// SHA256, MD5, Blake3, CRC. Please advice with Indico before use.
-	ChecksumType string
+	ChecksumType string `xml:",omitempty"`
 }
 
 type Location struct {
 	// The text for the current location, like the current address, city, etc.
-	Text string
+	Text string `xml:",omitempty"`
 	// Geo-location
-	Latitude string
+	Latitude string `xml:",omitempty"`
 	/// Geo-location
-	Longitude string
+	Longitude string `xml:",omitempty"`
+}
+
+// Stores a nested value as base64-encoded json.
+func unwrap(m *Metadata, t interface{}, s string) {
+	if t != nil {
+		sJ, err := json.Marshal(t)
+		if err != nil {
+			l.Errorf("There was a problem Marhsalling the '%s'-field", s)
+		} else if len(sJ) > 0 {
+			b := base64.StdEncoding.EncodeToString(sJ)
+			if b != "" {
+				m.Set(s, b)
+			}
+		}
+	}
+
 }
 
 func (t UploadMetadata) ConvertToMetaData() Metadata {
@@ -121,65 +137,49 @@ func (t UploadMetadata) ConvertToMetaData() Metadata {
 
 	m.Set(AccountName, t.AccountName)
 	m.Set(CaseNumber, t.CaseNumber)
+	unwrap(&m, t.Bookmarks, Bookmarks)
+	unwrap(&m, t.Subject, Subjects)
+	unwrap(&m, t.Etc, Etcetera)
+	unwrap(&m, t.SSN, SSN)
+	m.Set(ClientMediaId, t.ClientMediaId)
+	m.Set(GroupID, t.GroupId)
+	m.Set(GroupName, t.GroupName)
+	m.Set(Duration, t.Duration)
+	m.Set(FileType, t.FileType)
+	m.Set(DisplayName, t.DisplayName)
+	m.Set(Description, t.Description)
+	m.Set(Filename, t.FileName)
+	m.Set(ExtId, t.ExtId)
 	if t.CreatedAt != nil {
 		m.Set(CreatedAt, t.CreatedAt.Format(time.RFC3339))
 	}
 	if t.CapturedAt != nil {
 		m.Set(CapturedAt, t.CapturedAt.Format(time.RFC3339))
 	}
-	if t.Subject != nil {
-		sJ, err := json.Marshal(t.Subject)
-		if err != nil {
-			l.Errorf("There was a problem Marhsalling the subjects-field")
-		} else if len(sJ) > 0 {
-			subjects := base64.StdEncoding.EncodeToString(sJ)
-			if subjects != "" {
-				m.Set(Subjects, string(subjects))
-			}
-		}
+	if t.Creator != nil {
+		m.Set(CreatorSurname, t.Creator.LastName)
+		m.Set(CreatorDistrict, t.Creator.District)
 	}
-	if t.Etc != nil {
-		sJ, err := json.Marshal(t.Etc)
-		if err != nil {
-			l.Errorf("There was a problem Marhsalling the Etc-fields")
-		} else if len(sJ) > 0 {
-			etc := base64.StdEncoding.EncodeToString(sJ)
-			if etc != "" {
-				m.Set(Etcetera, string(etc))
-			}
-		}
+	if t.Tags != nil {
+		m.Set(Tags, strings.Join(t.Tags, ","))
 	}
-	if t.SSN != nil {
-		sJ, err := json.Marshal(t.SSN)
-		if err != nil {
-			l.Errorf("There was a problem Marhsalling the SSN-field")
-		} else if len(sJ) > 0 {
-			ssn := base64.StdEncoding.EncodeToString(sJ)
-			if ssn != "" {
-				m.Set(SSN, string(ssn))
-			}
-		}
-	}
+	if t.Checksum != nil {
+		m.Set(Checksum, t.Checksum.Value)
+		m.Set(ChecksumType, t.Checksum.ChecksumType)
 
-	m.Set(ClientMediaId, t.ClientMediaId)
-	m.Set(CreatorSurname, t.Creator.LastName)
-	m.Set(CreatorDistrict, t.Creator.District)
-	m.Set(GroupID, t.GroupId)
-	m.Set(GroupName, t.GroupName)
-	m.Set(ParentDescription, t.Parent.Description)
-	m.Set(ParentName, t.Parent.Name)
-	m.Set(Duration, t.Duration)
-	m.Set(FileType, t.FileType)
-	m.Set(DisplayName, t.DisplayName)
-	m.Set(Description, t.Description)
-	m.Set(Checksum, t.Checksum.Value)
-	m.Set(ChecksumType, t.Checksum.ChecksumType)
-	m.Set(Filename, t.FileName)
-	m.Set(ExtId, t.ExtId)
-	m.Set(LocationText, t.Location.Text)
-	m.Set(ParentId, t.Parent.Id)
-	m.Set(Longitude, t.Location.Longitude)
-	m.Set(Latitude, t.Location.Latitude)
+	}
+	if t.Location != nil {
+		m.Set(LocationText, t.Location.Text)
+		m.Set(Longitude, t.Location.Longitude)
+		m.Set(Latitude, t.Location.Latitude)
+
+	}
+	if t.Parent != nil {
+		m.Set(ParentName, t.Parent.Name)
+		m.Set(ParentDescription, t.Parent.Description)
+		m.Set(ParentId, t.Parent.Id)
+
+	}
 	m.Set(UserId, t.UserId)
 	m.Set(EquipmentID, t.EquipmentId)
 	m.Set(InterviewType, t.InterviewType)
