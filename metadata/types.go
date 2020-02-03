@@ -1,6 +1,7 @@
 package metadata
 
 import (
+	"encoding/xml"
 	"strings"
 	"time"
 )
@@ -21,11 +22,19 @@ type UploadMetadata struct {
 	Parent *Parent `xml:",omitempty"`
 	// The time of which the media was created in the backend-database
 	CreatedAt *time.Time `xml:",omitempty"`
+	// The time of which the media was last updated in the backend-database
+	UpdatedAt *time.Time `xml:",omitempty"`
+	// Is the item marked as archived, meaning it is marked to be deleted (soft-deleted). If null, the item is
+	// not scheduled for deletion, if a date is set, the item is marked for deletion at that time.
+	ArchiveAt *time.Time
+	// The date of which the item was marked as completed, E.g. the case was closed.
+	CompletedAt *time.Time
 	// The time of which the media was created by the user, on the client.
 	CapturedAt *time.Time `xml:",omitempty"`
 	// The fileType, as in MimeType. Example: 'image/jpeg' or 'video/mp4'
 	FileType string `xml:",omitempty"`
 	// A short description of the current file, submitted by the user
+	FileSize    int
 	DisplayName string `xml:",omitempty"`
 	// A longer description of the current file, submitted by the uer.
 	Description string `xml:",omitempty"`
@@ -52,8 +61,9 @@ type UploadMetadata struct {
 	// TBD
 	EquipmentId string `xml:",omitempty"`
 	// TBD
-	InterviewType string      `xml:",omitempty"`
-	Bookmarks     *[]Bookmark `xml:",omitempty"`
+	InterviewType string        `xml:",omitempty"`
+	Bookmarks     *[]Bookmark   `xml:",omitempty"`
+	Annotations   *[]Annotation `xml:",omitempty"`
 	// TBD
 	Notes string `xml:",omitempty"`
 	// A unique identifier of the file on the client.
@@ -64,6 +74,27 @@ type UploadMetadata struct {
 	GroupName string `xml:",omitempty"`
 	// Any custom-field. Should only be used for customer-specific fields that do not fit in any other field. Before use, please request Indico to add your required fields.
 	FormFields *[]FormFields `json:"etc,omitempty xml:FormFields"`
+	// Transcribed audio/video-details
+	Transcription *[]Utterance
+}
+
+type UtteranceType string
+
+const (
+	Saying UtteranceType = "Saying"
+	Event  UtteranceType = "Event"
+)
+
+type Utterance struct {
+	Type      UtteranceType `xml:",omitempty"`
+	Person    Person        `xml:",omitempty"`
+	EventKind string        `xml:",omitempty"`
+	Source    string        `xml:",omitempty"`
+	Text      string        `xml:",omitempty"`
+	// Position, in milliseconds
+	StartPosition int `xml:",omitempty"`
+	// EndPosition, in milliseconds
+	EndPosition int `xml:",omitempty"`
 }
 
 type GenderType string
@@ -131,19 +162,21 @@ type Location struct {
 	// The text for the current location, like the current address, city, etc.
 	Text string `xml:",omitempty"`
 	// Geo-location
-	Latitude string `xml:",omitempty"`
+	Latitude float32 `xml:",omitempty"`
 	// Geo-location
-	Longitude string `xml:",omitempty"`
-	Address   string `xml:",omitempty"`
-	Address2  string `xml:",omitempty"`
-	ZipCode   string `xml:",omitempty"`
-	PostArea  string `xml:",omitempty"`
-	Country   string `xml:",omitempty"`
+	Longitude float32 `xml:",omitempty"`
+	Address   string  `xml:",omitempty"`
+	Address2  string  `xml:",omitempty"`
+	ZipCode   string  `xml:",omitempty"`
+	PostArea  string  `xml:",omitempty"`
+	Country   string  `xml:",omitempty"`
+	Accuraccy float32 `xml:",omitempty"`
+	Altitude  float32 `xml:",omitempty"`
 }
 
-func (t UploadMetadata) ConvertToMetaData() Metadata {
+func (um UploadMetadata) ConvertToMetaData() Metadata {
 	m := Metadata{}
-	m.replaceUploadMetadata(t)
+	m.replaceUploadMetadata(um)
 	return m
 }
 
@@ -160,13 +193,17 @@ func CreateSampleData() UploadMetadata {
 		"S-1-5-21-1111111111-2222222222-333333333-1001",
 		"user@domainame",
 		&Parent{
-			"1234",
+			"all-metadata-test",
 			"Burglar",
 			"Break-in downtown",
 		},
 		&now,
 		&now,
+		&now,
+		&now,
+		&now,
 		"video/mp4",
+		16822,
 		"Interview with witness",
 		"Witness describing the event",
 		&[]MetaChecksum{
@@ -201,25 +238,29 @@ func CreateSampleData() UploadMetadata {
 				true,
 				Location{
 					"The red house down the street",
-					"1.23456",
-					"2.34567",
+					1.23456,
+					2.34567,
 					"Street-road 3",
 					"...",
 					"SX 6978923",
 					"Downtown",
 					"GBR",
+					44.0,
+					8.33,
 				},
 			},
 		},
 		&Location{
 			"The yellow house down the street",
-			"1.23456",
-			"2.34567",
+			1.23456,
+			2.34567,
 			"Street-road 8",
 			"...",
 			"SX 6978923",
 			"Downtown",
 			"GBR",
+			44.0,
+			8,
 		},
 		&[]Person{
 			{
@@ -237,19 +278,21 @@ func CreateSampleData() UploadMetadata {
 				false,
 				Location{
 					"Jailcell 3",
-					"4.23456",
-					"4.34567",
+					4.23456,
+					4.34567,
 					"Jail",
 					"...",
 					"SX 6978923",
 					"Jail",
 					"USA",
+					500,
+					0,
 				},
 			},
 			{
 				"Daisy",
 				"Duck",
-				"abc",
+				"abc-daisy",
 				createDate(1940, 6, 7),
 				GenderFemale,
 				"USA",
@@ -261,13 +304,15 @@ func CreateSampleData() UploadMetadata {
 				true,
 				Location{
 					"",
-					"2.23456",
-					"2.34567",
+					2.23456,
+					2.34567,
 					"Street 4",
 					"...",
 					"SX 6978923",
 					"Duckburg",
 					"USA",
+					44.0,
+					2.53,
 				},
 			},
 		},
@@ -283,6 +328,21 @@ func CreateSampleData() UploadMetadata {
 				112000,
 			},
 		},
+		&[]Annotation{{
+			now,
+			"abc",
+			"abc",
+			"cencor",
+			map[string]string{
+				"censorType": "beep",
+			},
+			0,
+			0,
+			0,
+			0,
+			18000,
+			32000,
+		}},
 		"Daisy witnessed the crime, and says she identified Burgar Beagle.",
 		"abc123",
 		"multicapture:12345",
@@ -328,6 +388,75 @@ func CreateSampleData() UploadMetadata {
 				},
 			},
 		},
+		&[]Utterance{
+			{
+				Saying,
+				Person{
+					Id: "abc-daisy",
+				},
+				"",
+				"system:azure",
+				"It was him, officer",
+				1000,
+				5000,
+			},
+			{
+				Event,
+				Person{
+					Id: "abc-daisy",
+				},
+				"Witness scratches her beak",
+				"user:sk166622",
+				"",
+				6000,
+				20000,
+			},
+			{
+				Event,
+				Person{
+					"John",
+					"Doe",
+					"sk166628",
+					createDate(1972, 8, 9),
+					GenderMale,
+					"GBR",
+					"Fictive Police Department",
+					"",
+					"322",
+					"322",
+					"322",
+					true,
+					Location{
+						"The blue house down the street",
+						1.23456,
+						2.34567,
+						"Street-road 8",
+						"...",
+						"SX 6978923",
+						"Downtown",
+						"GBR",
+						44,
+						8.2,
+					},
+				},
+				"Officer interrupts the interview",
+				"user:sk166622",
+				"",
+				18000,
+				32000,
+			},
+			{
+				Saying,
+				Person{
+					Id: "abc-daisy",
+				},
+				"",
+				"system:azure",
+				"I say Burgar breaking in.",
+				34000,
+				38000,
+			},
+		},
 	}
 	return um
 }
@@ -365,6 +494,57 @@ type Bookmark struct {
 	StartPosition int
 	// EndPosition, in milliseconds
 	EndPosition int
+}
+
+// Annotations can be small figures, highlights, descriptors on an image/vidoe/audio.
+// They can be added by the user, or automatically through OCR or Machine Learning.
+// For audio, it can also be a way to censor parts of the audio via for instance beeps.
+type Annotation struct {
+	CreationDate time.Time
+	ID           string
+	Title        string
+	Type         string
+	// Data will be a computer-friendly structure. The structure itself is not decided yet.
+	Data StringMap
+	// Position on the image/video.
+	X1 int
+	X2 int
+	Y1 int
+	Y2 int
+	// Position, in milliseconds
+	StartPosition int
+	// EndPosition, in milliseconds
+	EndPosition int
+}
+
+type StringMap map[string]string
+
+// StringMap marshals into XML.
+func (s StringMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+
+	tokens := []xml.Token{start}
+
+	for key, value := range s {
+		t := xml.StartElement{Name: xml.Name{"", key}}
+		tokens = append(tokens, t, xml.CharData(value), xml.EndElement{t.Name})
+	}
+
+	tokens = append(tokens, xml.EndElement{start.Name})
+
+	for _, t := range tokens {
+		err := e.EncodeToken(t)
+		if err != nil {
+			return err
+		}
+	}
+
+	// flush to ensure tokens are written
+	err := e.Flush()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Can be used to quickly validate that certain fields are not empty

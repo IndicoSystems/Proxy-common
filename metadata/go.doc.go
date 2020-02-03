@@ -10,7 +10,7 @@
 // The following definitions are used throughout this document.
 //
 // **Bb**
-//	Backend: Any server that can recieve files, and preferably, some metadata as well.
+//	Backend: Any server that can receive files, and preferably, some metadata as well.
 //	Client: Any software that can produce files and metadata and provide it to Proxy.
 // 	External ID: A Unique identifier on the backend of a file.
 // 	Parent ID: A unique identifier on the backend of a collection of files, like a folder, or an album
@@ -44,10 +44,7 @@
 // The size of each chunk can be set by the client, but we recommend at least 6 MB. Each chunk can optionally be
 // verified by providing the checksum of the current chunk.
 //
-// 1. Regular https://tus.io -implementation: POSTing to `/` with metadata in header. For clients with minimal
-// metadata, this method is preferred.
-//
-// 2. Extended by POST-ing metadata as JSON to `/create`.
+// POST-ing metadata as JSON to `/create`.
 //
 // A unique upload-url should have been returned in the previous step. Uploads can now begin, with chunk-uploads
 // preferred for large uploads. This upload-url should be stored on the client at least until the upload is completed.
@@ -56,11 +53,11 @@
 // Uploading file
 //
 //
-// Info recieved from backend
+// Info received from backend
 //
 // A backend will provide its External ID, Parent ID and Case ID (if supported) of the file, but the time of which it
-// does so may change from one backend to another. The client should accommodate this. It may return in the data in the
-// following events.
+// reports this information so may change from one backend to another. The client should accommodate this. It may
+// return the data in the following events.
 //
 // 1. The client creates a new upload.
 //
