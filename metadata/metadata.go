@@ -99,8 +99,6 @@ const (
 	// Etc
 	Etcetera = "etc"
 
-	// SSN
-	SSN = "ssn"
 	// DeferId - Internal use for deferred uploads
 	DeferId = "__deferId"
 	// DeferredFiledId - Internal use for deferred uploads
@@ -166,7 +164,7 @@ func (m Metadata) ConvertToType() UploadMetadata {
 		Bookmarks:     &bookmarks,
 		Notes:         m.GetExact(Notes),
 		Etc:           m.GetEtc(),
-		SSN:           m.GetSsn(),
+		//SSN:           m.GetSsn(),
 	}
 
 	creator := Creator{
@@ -273,11 +271,6 @@ func (m Metadata) GetEtc() (etc *[]Etc) {
 	return
 }
 
-// TODO: Map to correct ssn-structure
-func (m Metadata) GetSsn() (ssn *map[string]interface{}) {
-	m.getNested(SSN, &ssn)
-	return
-}
 func (m Metadata) GetExact(key string) string {
 	if val, ok := m[key]; ok {
 		return strings.TrimSpace(val)

@@ -15,7 +15,7 @@ import (
 type UploadMetadata struct {
 	// A unique identifier for the user in the backend-system
 	UserId string `xml:",omitempty"`
-	// The parent of this media.
+	// The parent of the current media.
 	Parent *Parent `xml:",omitempty"`
 	// The time of which the media was created in the backend-database
 	CreatedAt *time.Time `xml:",omitempty"`
@@ -44,7 +44,7 @@ type UploadMetadata struct {
 	// The location of the captured media
 	Location *Location `xml:",omitempty"`
 	// Any subjects in the captured media.
-	Subject *[]Person `json:"subjects,omitempty" xml:",omitempty`
+	Subject *[]Person `json:"subjects,omitempty" xml:",omitempty"`
 	// TBD
 	AccountName string `xml:",omitempty"`
 	// TBD
@@ -56,15 +56,12 @@ type UploadMetadata struct {
 	Notes string `xml:",omitempty"`
 	// A unique identifier of the file on the client.
 	ClientMediaId string `xml:",omitempty"`
-	// Id of any backend-provided Group-id
+	// ID of any backend-provided Group-id
 	GroupId string `xml:",omitempty"`
-	// Name of any backend-group. Providing it will c reate a groupName, if supported by the backend.
+	// Name of any backend-group. Providing it will c create a groupName, if supported by the backend.
 	GroupName string `xml:",omitempty"`
 	// Any custom-field. Should only be used for customer-specific fields that do not fit in any other field. Before use, please request Indico to add your required fields.
 	Etc *[]Etc `json:"etc,omitempty xml:Etc"`
-	// Reserved for SSN-compliant JSON from legacy-systems. Beware, adding this field to a request will change the behaviour of Proxy for the upload.
-	// This is necessary because of the custom-behaviour of the SSN-data.
-	SSN *map[string]interface{} `json:"ssn,omitempty" xml:-`
 }
 
 type Person struct {
@@ -120,7 +117,7 @@ func unwrap(m *Metadata, t interface{}, s string) {
 	if t != nil {
 		sJ, err := json.Marshal(t)
 		if err != nil {
-			l.Errorf("There was a problem Marhsalling the '%s'-field", s)
+			l.Errorf("There was a problem Marshalling the '%s'-field", s)
 		} else if len(sJ) > 0 {
 			b := base64.StdEncoding.EncodeToString(sJ)
 			if b != "" {
@@ -140,7 +137,6 @@ func (t UploadMetadata) ConvertToMetaData() Metadata {
 	unwrap(&m, t.Bookmarks, Bookmarks)
 	unwrap(&m, t.Subject, Subjects)
 	unwrap(&m, t.Etc, Etcetera)
-	unwrap(&m, t.SSN, SSN)
 	m.Set(ClientMediaId, t.ClientMediaId)
 	m.Set(GroupID, t.GroupId)
 	m.Set(GroupName, t.GroupName)
@@ -184,7 +180,7 @@ func (t UploadMetadata) ConvertToMetaData() Metadata {
 	m.Set(EquipmentID, t.EquipmentId)
 	m.Set(InterviewType, t.InterviewType)
 	m.Set(Notes, t.Notes)
-	// TODO:; Map atatchments, booksmarks.
+	// TODO:; Map attachments, bookmarks.
 	for key, val := range m {
 		if val == "" {
 			delete(m, key)
