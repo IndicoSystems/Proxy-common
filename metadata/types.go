@@ -1,7 +1,6 @@
 package metadata
 
 import (
-	"fmt"
 	"strings"
 	"time"
 )
@@ -14,6 +13,10 @@ import (
 type UploadMetadata struct {
 	// A unique identifier for the user in the backend-system
 	UserId string `xml:",omitempty"`
+	// Active-Directory-user, if available
+	AdSid string `xml:",omitempty"`
+	// Active-Directory-user, if available, in the format 'user@domainname@
+	AdLogin string `xml:",omitempty"`
 	// The parent of the current media.
 	Parent *Parent `xml:",omitempty"`
 	// The time of which the media was created in the backend-database
@@ -67,9 +70,9 @@ type GenderType string
 
 func ToGender(s string) GenderType {
 	switch strings.ToLower(s) {
-	case "male", "m":
+	case "male", "m", "mann":
 		return GenderMale
-	case "female", "f":
+	case "female", "f", "kvinne":
 		return GenderFemale
 	case "":
 		return GenderUnspecified
@@ -146,7 +149,6 @@ func (t UploadMetadata) ConvertToMetaData() Metadata {
 
 func createDate(y int, m time.Month, d int) *time.Time {
 	date := time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
-	fmt.Println(date)
 	return &date
 }
 
@@ -155,6 +157,8 @@ func CreateSampleData() UploadMetadata {
 	//dob := time.Date(1951, 11, 4, 0, 0, 0, 0, time.UTC)
 	um := UploadMetadata{
 		"user",
+		"S-1-5-21-1111111111-2222222222-333333333-1001",
+		"user@domainame",
 		&Parent{
 			"1234",
 			"Burglar",
@@ -292,6 +296,10 @@ func CreateSampleData() UploadMetadata {
 				"A blue dress",
 				false,
 				"String",
+				&ValidationRule{
+					3,
+					300,
+				},
 			},
 			{
 				"mood",
@@ -301,6 +309,10 @@ func CreateSampleData() UploadMetadata {
 				"Scared, stressed",
 				true,
 				"String",
+				&ValidationRule{
+					3,
+					300,
+				},
 			},
 			{
 				"countOfFingers",
@@ -310,6 +322,10 @@ func CreateSampleData() UploadMetadata {
 				"3",
 				true,
 				"Int",
+				&ValidationRule{
+					0,
+					24,
+				},
 			},
 		},
 	}
@@ -331,7 +347,13 @@ type FormFields struct {
 	// Marks whether or not field is required or not.
 	Required bool `xml:",omitempty"`
 	// The kind of data in the Value-field.
-	DataType string `xml:",omitempty"`
+	DataType       string          `xml:",omitempty"`
+	ValidationRule *ValidationRule `xml:",omitempty"`
+}
+
+type ValidationRule struct {
+	Min int `xml:",omitempty"`
+	Max int `xml:",omitempty"`
 }
 
 // Bookmark object belonging to a certain recording.
