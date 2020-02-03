@@ -1,9 +1,6 @@
 package metadata
 
 import (
-	"encoding/base64"
-	"encoding/json"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -140,83 +137,10 @@ type Location struct {
 	Country   string `xml:",omitempty"`
 }
 
-// Stores a nested value as base64-encoded json.
-func unwrap(m *Metadata, t interface{}, s string) {
-	if t != nil {
-		sJ, err := json.Marshal(t)
-		if err != nil {
-			l.Errorf("There was a problem Marshalling the '%s'-field", s)
-		} else if len(sJ) > 0 {
-			b := base64.StdEncoding.EncodeToString(sJ)
-			if b != "" {
-				m.Set(s, b)
-			}
-		}
-	}
-
-}
-
 func (t UploadMetadata) ConvertToMetaData() Metadata {
-	// TODO: Some of these nested types will result in error if empty
 	m := Metadata{}
-
-	m.Set(AccountName, t.AccountName)
-	m.Set(CaseNumber, t.CaseNumber)
-	unwrap(&m, t.Bookmarks, Bookmarks)
-	unwrap(&m, t, MUploadMetadata)
-	unwrap(&m, t.Subject, Subjects)
-	unwrap(&m, t.Etc, Etcetera)
-	unwrap(&m, t.Creator, MCreator)
-	m.Set(ClientMediaId, t.ClientMediaId)
-	m.Set(GroupID, t.GroupId)
-	m.Set(GroupName, t.GroupName)
-	if t.Duration != 0 {
-		m.Set(Duration, strconv.FormatInt(t.Duration, 10))
-	}
-	m.Set(FileType, t.FileType)
-	m.Set(DisplayName, t.DisplayName)
-	m.Set(Description, t.Description)
-	m.Set(Filename, t.FileName)
-	m.Set(ExtId, t.ExtId)
-	if t.CreatedAt != nil {
-		m.Set(CreatedAt, t.CreatedAt.Format(time.RFC3339))
-	}
-	if t.CapturedAt != nil {
-		m.Set(CapturedAt, t.CapturedAt.Format(time.RFC3339))
-	}
-	if t.Tags != nil {
-		m.Set(Tags, strings.Join(t.Tags, ","))
-	}
-	if t.Checksum != nil {
-		// FIXME: Only the first value is extracted
-		m.Set(Checksum, (*t.Checksum)[0].Value)
-		m.Set(ChecksumType, (*t.Checksum)[0].ChecksumType)
-
-	}
-	if t.Location != nil {
-		m.Set(LocationText, t.Location.Text)
-		m.Set(Longitude, t.Location.Longitude)
-		m.Set(Latitude, t.Location.Latitude)
-
-	}
-	if t.Parent != nil {
-		m.Set(ParentName, t.Parent.Name)
-		m.Set(ParentDescription, t.Parent.Description)
-		m.Set(ParentId, t.Parent.Id)
-
-	}
-	m.Set(UserId, t.UserId)
-	m.Set(EquipmentID, t.EquipmentId)
-	m.Set(InterviewType, t.InterviewType)
-	m.Set(Notes, t.Notes)
-	// TODO:; Map attachments, bookmarks.
-	for key, val := range m {
-		if val == "" {
-			delete(m, key)
-		}
-	}
+	m.replaceUploadMetadata(t)
 	return m
-
 }
 
 func CreateSampleData() UploadMetadata {
@@ -382,4 +306,81 @@ func CreateSampleData() UploadMetadata {
 		},
 	}
 	return um
+}
+
+// Etc er unmapped metadata. In Indico Gateway, these represent an organizational-form.
+type Etc struct {
+	// The metadata-key.
+	Key string `xml:",omitempty"`
+	// The id of the field, where available.
+	FieldId string `xml:",omitempty"`
+	// The key used to get the translated VisualName, where available.
+	TranslationKey string `xml:",omitempty"`
+	// The visual name, as reported by the client.
+	VisualName string `xml:",omitempty"`
+	// The value of the field, e.g. the user-input
+	Value string `xml:""`
+	// Marks whether or not field is required or not.
+	Required bool `xml:",omitempty"`
+	// The kind of data in the Value-field.
+	DataType string `xml:",omitempty"`
+}
+
+// Bookmark object belonging to a certain recording.
+type Bookmark struct {
+	CreationDate time.Time
+	ID           string
+	Title        string
+	// Position, in milliseconds
+	StartPosition int
+	// EndPosition, in milliseconds
+	EndPosition int
+}
+
+// Can be used to quickly validate that certain fields are not empty
+func (um UploadMetadata) ValidateRequiredFields(r []string) (missing []string) {
+	for _, key := range r {
+		switch key {
+		case "userid":
+			if um.UserId == "" {
+				missing = append(missing, key)
+			}
+			// displayname is allowed to be empty
+		case "displayname":
+			l.WithField("field", key).Warn("Invalid Required-field")
+		case "filetype":
+			if um.FileType == "" {
+				missing = append(missing, key)
+			}
+		case "filename":
+			if um.FileName == "" {
+				missing = append(missing, key)
+			}
+		case "checksum":
+			if um.Checksum == nil {
+				missing = append(missing, key)
+			}
+		case "createdat":
+			if um.CreatedAt == nil {
+				missing = append(missing, key)
+			}
+		case "parentid":
+			if um.Parent == nil {
+				missing = append(missing, key)
+			}
+			if um.Parent.Id == "" {
+				missing = append(missing, key)
+			}
+		case "parentname":
+			if um.Parent == nil {
+				missing = append(missing, key)
+			}
+			if um.Parent.Name == "" {
+				missing = append(missing, key)
+			}
+		default:
+			l.Fatalf("Field is not defined in ValidateRequiredFields: '%s'", key)
+		}
+	}
+	return
 }

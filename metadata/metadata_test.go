@@ -16,7 +16,7 @@ func TestMetadata_Get(t *testing.T) {
 		key: value,
 	})
 
-	assert.Equal(t, value, md.Get("KEY1"))
+	assert.Equal(t, value, md.get("KEY1"))
 }
 
 func TestMetadata_Set(t *testing.T) {
@@ -25,23 +25,9 @@ func TestMetadata_Set(t *testing.T) {
 
 	md := Metadata(make(map[string]string))
 
-	md.Set(key, value)
+	md.set(key, value)
 
 	assert.Equal(t, value, md[key])
-}
-
-func TestMetadata_Map(t *testing.T) {
-	key := "key1"
-	key2 := "key2"
-	value := "value1"
-
-	md := Metadata(map[string]string{
-		key: value,
-	})
-
-	md.Map(key, key2)
-
-	assert.Equal(t, value, md[key2])
 }
 
 func TestMetadata_ConvertToType(t *testing.T) {
@@ -59,8 +45,8 @@ func TestMetadata_ConvertToType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.m.ConvertToType(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ConvertToType() = \n%+v, \nwant \n%+v", got, tt.want)
+			if got := tt.m.GetUploadMetadata(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetUploadMetadata() = \n%+v, \nwant \n%+v", got, tt.want)
 			}
 		})
 	}
@@ -205,7 +191,7 @@ func TestType_ConvertToMetaData(t1 *testing.T) {
 				//Attachments:       "",
 				Notes:             "Some random notes",
 				ClientMediaId:     "1234",
-				ExtId:             "9999",
+				extId:             "9999",
 				CaseNumber:        "8888",
 				Duration:          "30",
 				CreatedAt:         "2019-12-24T00:00:00Z",
@@ -242,13 +228,13 @@ func TestType_ConvertToMetaData(t1 *testing.T) {
 				}
 				t1.Errorf("Did not match wanted result: \n diff %+v, \nGot: %+v, \nWanted: %+v", diff, got, tt.want)
 			}
-			m := got.ConvertToType()
+			m := got.GetUploadMetadata()
 			if diff := deep.Equal(m, t); diff != nil {
 				t1.Logf("\n'%+v' \n'%+v'", got.GetEtc(), tt.want.GetEtc())
 				t1.Errorf("Convert to metadata and back again did not produce the same result\n diff: %+v \nGot: %+v \n Expected result: %+v", diff, m, t)
 			}
 			//if !reflect.DeepEqual(got, tt.want) {
-			//	t1.Errorf("ConvertToMetaData() => ConvertToType = \n%v, want \n%v", got, tt.want)
+			//	t1.Errorf("ConvertToMetaData() => GetUploadMetadata = \n%v, want \n%v", got, tt.want)
 			//}
 
 		})
