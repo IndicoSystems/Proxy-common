@@ -143,7 +143,7 @@ func TestType_ConvertToMetaData(t1 *testing.T) {
 						//FirstName:   "Thomas",
 						//Id:          "1234",
 						//Dob:         "20xx",
-						//Gender:      "Male",
+						//GenderType:      "Male",
 						//Nationality: "Canadian",
 						//Workplace:   "Robot Institute of Technology",
 						//Status:      "",

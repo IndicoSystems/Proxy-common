@@ -6,6 +6,7 @@ import (
 	"github.com/btubbs/datetime"
 	"github.com/indicosystems/proxy/logger"
 	"github.com/sirupsen/logrus"
+	"strconv"
 	"strings"
 
 	"time"
@@ -57,11 +58,7 @@ const (
 	// Duration for the media, in case of audio/video. Always in ms.
 	Duration = "duration"
 
-	// The surname of the creator, often the officer.
-	CreatorSurname = "creatorsurname"
-
-	// The district of which the creator belongs.
-	CreatorDistrict = "creatordistrict"
+	MCreator = "creator"
 
 	// Textual representation of the location, like Madrid, or street address
 	LocationText = "locationtext"
@@ -97,7 +94,8 @@ const (
 	ClientMediaId = "clientmediaid"
 
 	// Etc
-	Etcetera = "etc"
+	Etcetera        = "etc"
+	MUploadMetadata = "__UploadMetadata"
 
 	// DeferId - Internal use for deferred uploads
 	DeferId = "__deferId"
@@ -135,6 +133,12 @@ func parseDateSafely(v string) *time.Time {
 }
 
 func (m Metadata) ConvertToType() UploadMetadata {
+	um := m.GetUploadMetadata()
+	if um != nil {
+		return *um
+	}
+	// This is deprecated
+	l.Warn("Did not find uploadMetadata in metadata. The data may not be correct.")
 	checksum := m.GetChecksum()
 	bookmarks := m.GetBookmarks()
 	u := UploadMetadata{
@@ -149,7 +153,6 @@ func (m Metadata) ConvertToType() UploadMetadata {
 		},
 		CreatedAt:     m.GetCreatedAtTime(),
 		CapturedAt:    m.GetCapturedAtTime(),
-		Duration:      m.GetExact(Duration),
 		FileType:      m.GetExact(FileType),
 		DisplayName:   m.GetExact(DisplayName),
 		Description:   m.GetExact(Description),
@@ -164,15 +167,21 @@ func (m Metadata) ConvertToType() UploadMetadata {
 		Bookmarks:     &bookmarks,
 		Notes:         m.GetExact(Notes),
 		Etc:           m.GetEtc(),
-		//SSN:           m.GetSsn(),
 	}
 
-	creator := Creator{
-		District: m.GetExact(CreatorDistrict),
-		Person:   Person{LastName: m.GetExact(CreatorSurname)},
+	if ds := m.GetExact(Duration); ds != "" {
+		d, err := strconv.ParseInt(ds, 10, 64)
+		if err == nil {
+			u.Duration = d
+		}
 	}
-	if creator != (Creator{}) {
-		u.Creator = &creator
+
+	creator := m.GetCreator()
+	if creator != nil {
+		u.Creator = creator
+	}
+	if *creator != (Creator{}) {
+		u.Creator = creator
 	}
 	location := m.GetLocation()
 	if location != nil {
@@ -203,10 +212,12 @@ type Etc struct {
 	DataType string `xml:",omitempty"`
 }
 
-func (m Metadata) GetChecksum() MetaChecksum {
-	return MetaChecksum{
-		Value:        m.GetExact(Checksum),
-		ChecksumType: m.GetExact(ChecksumType),
+func (m Metadata) GetChecksum() []MetaChecksum {
+	return []MetaChecksum{
+		{
+			Value:        m.GetExact(Checksum),
+			ChecksumType: m.GetExact(ChecksumType),
+		},
 	}
 }
 
@@ -243,26 +254,39 @@ func (m Metadata) getNested(key string, v interface{}) error {
 
 // Bookmark object belonging to a certain recording.
 type Bookmark struct {
-	CreationDate  string
-	ID            string
-	Title         string
+	CreationDate time.Time
+	ID           string
+	Title        string
+	// Position, in milliseconds
 	StartPosition int
-	EndPosition   int
+	// EndPosition, in milliseconds
+	EndPosition int
 }
 
 func (m Metadata) GetBookmarks() (bm []Bookmark) {
 	m.getNested(Bookmarks, &bm)
 	return
 }
+func (m Metadata) GetUploadMetadata() (um *UploadMetadata) {
+	m.getNested(MUploadMetadata, &um)
+	return
+}
 func (m Metadata) GetPerson() *[]Person {
 	var ps []Person
 	m.getNested(Subjects, &ps)
 	for _, p := range ps {
-		p.Country = "bob"
 		if (Person{} != p) {
 			return &ps
 		}
 
+	}
+	return nil
+}
+func (m Metadata) GetCreator() *Creator {
+	var ps Creator
+	m.getNested(MCreator, &ps)
+	if (Creator{} != ps) {
+		return &ps
 	}
 	return nil
 }

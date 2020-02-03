@@ -3,6 +3,7 @@ package metadata
 import (
 	"encoding/base64"
 	"encoding/json"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -28,7 +29,7 @@ type UploadMetadata struct {
 	// A longer description of the current file, submitted by the uer.
 	Description string `xml:",omitempty"`
 	// Any checksums already calculated by the client.
-	Checksum *MetaChecksum `xml:",omitempty"`
+	Checksum *[]MetaChecksum `xml:",omitempty"`
 	// The filename,
 	FileName string `xml:",omitempty"`
 	// Tags
@@ -38,7 +39,7 @@ type UploadMetadata struct {
 	// A case-number returned by the user
 	CaseNumber string `xml:",omitempty"`
 	// Duration of the media, if audio or video. Int64. Should be in milliseconds when sending.
-	Duration string `xml:",omitempty"`
+	Duration int64 `xml:",omitempty"`
 	// The creator of the current file, as in the current user, interviewer etc.
 	Creator *Creator `xml:",omitempty"`
 	// The location of the captured media
@@ -64,25 +65,46 @@ type UploadMetadata struct {
 	Etc *[]Etc `json:"etc,omitempty xml:Etc"`
 }
 
+type GenderType string
+
+func ToGender(s string) GenderType {
+	switch strings.ToLower(s) {
+	case "male", "m":
+		return GenderMale
+	case "female", "f":
+		return GenderFemale
+	case "":
+		return GenderUnspecified
+	}
+	l.Warn("Could not assing the string '%s' to type gender", s)
+	return GenderOther
+
+}
+
+const (
+	GenderFemale      GenderType = "Female"
+	GenderMale        GenderType = "Male"
+	GenderOther       GenderType = "Other"
+	GenderUnspecified GenderType = ""
+)
+
 type Person struct {
 	FirstName string `json:"firstName" xml:",omitempty"`
 	LastName  string `json:"lastName" xml:",omitempty"`
 	Id        string `json:"id" xml:",omitempty"`
 	// Date of birth
-	Dob         string `json:"dob" xml:",omitempty"`
-	Gender      string `json:"gender" xml:",omitempty"`
-	Nationality string `json:"nationality" xml:",omitempty"`
-	Workplace   string `json:"workplace" xml:",omitempty"`
+	Dob         time.Time  `json:"dob" xml:",omitempty"`
+	Gender      GenderType `json:"gender" xml:",omitempty"`
+	Nationality string     `json:"nationality" xml:",omitempty"`
+	Workplace   string     `json:"workplace" xml:",omitempty"`
 	// TBD
 	Status    string `json:"status" xml:",omitempty"`
-	Address   string `json:"address" xml:",omitempty"`
-	ZipCode   int    `json:"zip" xml:",omitempty"`
-	Country   string `json:"country" xml:",omitempty"`
 	WorkPhone string `json:"workPhone" xml:",omitempty"`
 	Phone     string `json:"phone" xml:",omitempty"`
 	Mobile    string `json:"mobile" xml:",omitempty"`
 	// TBD
 	Present bool `json:"isPresent" xml:",omitempty"`
+	Location
 }
 
 type Parent struct {
@@ -92,8 +114,9 @@ type Parent struct {
 }
 
 type Creator struct {
-	District string `xml:",omitempty"`
-	Person   `xml:",omitempty"`
+	// Can be an identifier, like an officer's badge-id, or a userId in the system.
+	SysId  string `xml:",omitempty"`
+	Person `xml:",omitempty"`
 }
 
 type MetaChecksum struct {
@@ -108,8 +131,13 @@ type Location struct {
 	Text string `xml:",omitempty"`
 	// Geo-location
 	Latitude string `xml:",omitempty"`
-	/// Geo-location
+	// Geo-location
 	Longitude string `xml:",omitempty"`
+	Address   string `xml:",omitempty"`
+	Address2  string `xml:",omitempty"`
+	ZipCode   string `xml:",omitempty"`
+	PostArea  string `xml:",omitempty"`
+	Country   string `xml:",omitempty"`
 }
 
 // Stores a nested value as base64-encoded json.
@@ -135,12 +163,16 @@ func (t UploadMetadata) ConvertToMetaData() Metadata {
 	m.Set(AccountName, t.AccountName)
 	m.Set(CaseNumber, t.CaseNumber)
 	unwrap(&m, t.Bookmarks, Bookmarks)
+	unwrap(&m, t, MUploadMetadata)
 	unwrap(&m, t.Subject, Subjects)
 	unwrap(&m, t.Etc, Etcetera)
+	unwrap(&m, t.Creator, MCreator)
 	m.Set(ClientMediaId, t.ClientMediaId)
 	m.Set(GroupID, t.GroupId)
 	m.Set(GroupName, t.GroupName)
-	m.Set(Duration, t.Duration)
+	if t.Duration != 0 {
+		m.Set(Duration, strconv.FormatInt(t.Duration, 10))
+	}
 	m.Set(FileType, t.FileType)
 	m.Set(DisplayName, t.DisplayName)
 	m.Set(Description, t.Description)
@@ -152,16 +184,13 @@ func (t UploadMetadata) ConvertToMetaData() Metadata {
 	if t.CapturedAt != nil {
 		m.Set(CapturedAt, t.CapturedAt.Format(time.RFC3339))
 	}
-	if t.Creator != nil {
-		m.Set(CreatorSurname, t.Creator.LastName)
-		m.Set(CreatorDistrict, t.Creator.District)
-	}
 	if t.Tags != nil {
 		m.Set(Tags, strings.Join(t.Tags, ","))
 	}
 	if t.Checksum != nil {
-		m.Set(Checksum, t.Checksum.Value)
-		m.Set(ChecksumType, t.Checksum.ChecksumType)
+		// FIXME: Only the first value is extracted
+		m.Set(Checksum, (*t.Checksum)[0].Value)
+		m.Set(ChecksumType, (*t.Checksum)[0].ChecksumType)
 
 	}
 	if t.Location != nil {
@@ -188,4 +217,169 @@ func (t UploadMetadata) ConvertToMetaData() Metadata {
 	}
 	return m
 
+}
+
+func CreateSampleData() UploadMetadata {
+	now := time.Now().Round(time.Second)
+	um := UploadMetadata{
+		"user",
+		&Parent{
+			"1234",
+			"Burglar",
+			"Break-in downtown",
+		},
+		&now,
+		&now,
+		"video/mp4",
+		"Interview with witness",
+		"Witness describing the event",
+		&[]MetaChecksum{
+			{
+				"c013d16a335e2e40edf7d91d2c1f48930e52f3b76a5347010ed25a2334cee872",
+				"SHA256",
+			},
+			{
+				"fc02353cb44eb5113a239105daa15c465a5ca57ac2869ea0b381f6f871d22441",
+				"SHA3-256",
+			},
+		},
+		"recording-123.mp4",
+		[]string{"robbery", "masked", "villain"},
+		"1234",
+		"C6288",
+		int64((44*time.Minute + 8*time.Second + 36*time.Millisecond) / time.Millisecond),
+		&Creator{
+			"Downtown district",
+			Person{
+				"Jane",
+				"Doe",
+				"sk166622",
+				time.Date(1977, 3, 4, 0, 0, 0, 0, time.UTC),
+				GenderFemale,
+				"GBR",
+				"Fictive Police Department",
+				"",
+				"321",
+				"321",
+				"321",
+				true,
+				Location{
+					"The red house down the street",
+					"1.23456",
+					"2.34567",
+					"Street-road 3",
+					"...",
+					"SX 6978923",
+					"Downtown",
+					"GBR",
+				},
+			},
+		},
+		&Location{
+			"The yellow house down the street",
+			"1.23456",
+			"2.34567",
+			"Street-road 8",
+			"...",
+			"SX 6978923",
+			"Downtown",
+			"GBR",
+		},
+		&[]Person{
+			{
+				"Burger",
+				"Beagle",
+				"176-176",
+				time.Date(1951, 11, 4, 0, 0, 0, 0, time.UTC),
+				GenderMale,
+				"USA",
+				"Jail",
+				"Suspect",
+				"123",
+				"123",
+				"123",
+				false,
+				Location{
+					"Jailcell 3",
+					"4.23456",
+					"4.34567",
+					"Jail",
+					"...",
+					"SX 6978923",
+					"Jail",
+					"USA",
+				},
+			},
+			{
+				"Daisy",
+				"Duck",
+				"abc",
+				time.Date(1940, 6, 7, 0, 0, 0, 0, time.UTC),
+				GenderFemale,
+				"USA",
+				"Unknown",
+				"Witness",
+				"123",
+				"123",
+				"123",
+				true,
+				Location{
+					"",
+					"2.23456",
+					"2.34567",
+					"Street 4",
+					"...",
+					"SX 6978923",
+					"Duckburg",
+					"USA",
+				},
+			},
+		},
+		"acc",
+		"iPhone 20",
+		"Witness",
+		&[]Bookmark{
+			{
+				now,
+				"abc123",
+				"Stressed interviewee",
+				63000,
+				112000,
+			},
+		},
+		"Daisy witnessed the crime, and says she identified Burgar Beagle.",
+		"abc123",
+		"multicapture:12345",
+		"MutlipleViews",
+		&[]Etc{
+			{
+				"clothing",
+				"c12422D3",
+				"formKeys.clothing",
+				"Main-subjects clothing",
+				"A blue dress",
+				false,
+				"String",
+			},
+			{
+				"mood",
+				"c12422G6",
+				"formKeys.mood",
+				"Main-subjects mood",
+				"Scared, stressed",
+				true,
+				"String",
+			},
+			{
+				"countOfFingers",
+				"c12422G7",
+				"formKeys.countOfFingers",
+				"Main-subjects number of fingers",
+				"3",
+				true,
+				"Int",
+			},
+		},
+	}
+	return um
 }
