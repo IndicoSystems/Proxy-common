@@ -1,6 +1,7 @@
 package metadata
 
 import (
+	"fmt"
 	"strings"
 	"time"
 )
@@ -59,7 +60,7 @@ type UploadMetadata struct {
 	// Name of any backend-group. Providing it will c create a groupName, if supported by the backend.
 	GroupName string `xml:",omitempty"`
 	// Any custom-field. Should only be used for customer-specific fields that do not fit in any other field. Before use, please request Indico to add your required fields.
-	Etc *[]Etc `json:"etc,omitempty xml:Etc"`
+	FormFields *[]FormFields `json:"etc,omitempty xml:FormFields"`
 }
 
 type GenderType string
@@ -90,7 +91,7 @@ type Person struct {
 	LastName  string `json:"lastName" xml:",omitempty"`
 	Id        string `json:"id" xml:",omitempty"`
 	// Date of birth
-	Dob         time.Time  `json:"dob" xml:",omitempty"`
+	Dob         *time.Time `json:"dob" xml:",omitempty"`
 	Gender      GenderType `json:"gender" xml:",omitempty"`
 	Nationality string     `json:"nationality" xml:",omitempty"`
 	Workplace   string     `json:"workplace" xml:",omitempty"`
@@ -143,8 +144,15 @@ func (t UploadMetadata) ConvertToMetaData() Metadata {
 	return m
 }
 
+func createDate(y int, m time.Month, d int) *time.Time {
+	date := time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
+	fmt.Println(date)
+	return &date
+}
+
 func CreateSampleData() UploadMetadata {
 	now := time.Now().Round(time.Second)
+	//dob := time.Date(1951, 11, 4, 0, 0, 0, 0, time.UTC)
 	um := UploadMetadata{
 		"user",
 		&Parent{
@@ -178,7 +186,7 @@ func CreateSampleData() UploadMetadata {
 				"Jane",
 				"Doe",
 				"sk166622",
-				time.Date(1977, 3, 4, 0, 0, 0, 0, time.UTC),
+				createDate(1977, 3, 4),
 				GenderFemale,
 				"GBR",
 				"Fictive Police Department",
@@ -214,7 +222,7 @@ func CreateSampleData() UploadMetadata {
 				"Burger",
 				"Beagle",
 				"176-176",
-				time.Date(1951, 11, 4, 0, 0, 0, 0, time.UTC),
+				createDate(1951, 11, 4),
 				GenderMale,
 				"USA",
 				"Jail",
@@ -238,7 +246,7 @@ func CreateSampleData() UploadMetadata {
 				"Daisy",
 				"Duck",
 				"abc",
-				time.Date(1940, 6, 7, 0, 0, 0, 0, time.UTC),
+				createDate(1940, 6, 7),
 				GenderFemale,
 				"USA",
 				"Unknown",
@@ -275,7 +283,7 @@ func CreateSampleData() UploadMetadata {
 		"abc123",
 		"multicapture:12345",
 		"MutlipleViews",
-		&[]Etc{
+		&[]FormFields{
 			{
 				"clothing",
 				"c12422D3",
@@ -308,8 +316,8 @@ func CreateSampleData() UploadMetadata {
 	return um
 }
 
-// Etc er unmapped metadata. In Indico Gateway, these represent an organizational-form.
-type Etc struct {
+// FormFields er unmapped metadata. In Indico Gateway, these represent an organizational-form.
+type FormFields struct {
 	// The metadata-key.
 	Key string `xml:",omitempty"`
 	// The id of the field, where available.

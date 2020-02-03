@@ -174,7 +174,7 @@ func TestType_ConvertToMetaData(t1 *testing.T) {
 				Notes:         "Some random notes",
 				ClientMediaId: "1234",
 				GroupId:       "4321",
-				Etc: map[string]interface{}{
+				FormFields: map[string]interface{}{
 					"string": "batman",
 					"array":  []interface{}{"Alice", "Bob", "Eve"},
 					"nested": map[string]interface{}{
