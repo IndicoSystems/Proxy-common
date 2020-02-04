@@ -9,7 +9,6 @@
 //
 // The following definitions are used throughout this document.
 //
-// **Bb**
 //	Backend: Any server that can receive files, and preferably, some metadata as well.
 //	Client: Any software that can produce files and metadata and provide it to Proxy.
 // 	External ID: A Unique identifier on the backend of a file.

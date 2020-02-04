@@ -64,9 +64,7 @@ func (m *Metadata) GetUploadMetadata() UploadMetadata {
 		l.Errorf("Expected upload-metadata not to be nil")
 		panic("Expected upload-metadata not to be nil")
 	}
-	if um.Parent == nil {
-		l.Warn("Parent is nil (GetUploadMetadata)")
-	}
+	l.Warn("Parent is nil (GetUploadMetadata)")
 	return um
 
 }
@@ -107,13 +105,7 @@ func (m *Metadata) SetExtUploaded() {
 func (m *Metadata) SetExtParentId(d string) {
 	m.set(extParentId, d)
 	um := m.GetUploadMetadata()
-	if um.Parent == nil {
-		um.Parent = &Parent{
-			Id: d,
-		}
-	} else {
-		um.Parent.Id = d
-	}
+	um.Parent.Id = d
 	m.replaceUploadMetadata(um)
 }
 
