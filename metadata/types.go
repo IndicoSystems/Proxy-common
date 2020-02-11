@@ -357,7 +357,7 @@ func CreateSampleData() UploadMetadata {
 				"A blue dress",
 				false,
 				"String",
-				&ValidationRule{
+				ValidationRule{
 					3,
 					300,
 				},
@@ -370,7 +370,7 @@ func CreateSampleData() UploadMetadata {
 				"Scared, stressed",
 				true,
 				"String",
-				&ValidationRule{
+				ValidationRule{
 					3,
 					300,
 				},
@@ -383,7 +383,7 @@ func CreateSampleData() UploadMetadata {
 				"3",
 				true,
 				"Int",
-				&ValidationRule{
+				ValidationRule{
 					0,
 					24,
 				},
@@ -477,8 +477,8 @@ type FormFields struct {
 	// Marks whether or not field is required or not.
 	Required bool `json:"required"`
 	// The kind of data in the Value-field.
-	DataType       string          `json:"dataType"`
-	ValidationRule *ValidationRule `json:"validationRule"`
+	DataType       string         `json:"dataType"`
+	ValidationRule ValidationRule `json:"validationRule"`
 }
 
 type ValidationRule struct {
