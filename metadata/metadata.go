@@ -64,7 +64,10 @@ func (m *Metadata) GetUploadMetadata() UploadMetadata {
 		l.Errorf("Expected upload-metadata not to be nil")
 		panic("Expected upload-metadata not to be nil")
 	}
-	l.Warn("Parent is nil (GetUploadMetadata)")
+	if um.Parent.Id == "" && um.Parent.Name == "" {
+		l.Warn("Parent does not have an ID, nor a Name (GetUploadMetadata)")
+
+	}
 	return um
 
 }
