@@ -3,6 +3,7 @@ package metadata
 import (
 	"encoding/base64"
 	"encoding/json"
+	"github.com/indicosystems/proxy/connectors/support"
 	"github.com/indicosystems/proxy/logger"
 	"github.com/sirupsen/logrus"
 	tusd "github.com/tus/tusd/pkg/handler"
@@ -104,6 +105,21 @@ func (m *Metadata) SetExtId(d string) {
 }
 func (m *Metadata) SetExtUploaded() {
 	m.set(extUploaded, "true")
+}
+func (m *Metadata) SetAuthenticationPayload(a support.AuthenticationPayload) *Metadata {
+	if a.ClientId != "" {
+		m.set("client-id", a.ClientId)
+	}
+	if a.UserName != "" {
+		m.set("as-username", a.UserName)
+	}
+	if a.UserSid != "" {
+		m.set("as-usersid", a.UserSid)
+	}
+	if a.UserId != "" {
+		m.set("as-userid", a.UserId)
+	}
+	return m
 }
 func (m *Metadata) SetExtParentId(d string) {
 	m.set(extParentId, d)
