@@ -13,6 +13,11 @@ import (
 const (
 	// The ID of the user the file belongs to.
 	UserId = "userid"
+	// Used by authenticators
+	ClientId                 = "client-id"
+	AsUserName               = "as-username"
+	AsUserId                 = "as-user-id"
+	AsUserActiveDirectorySid = "as-user-sid"
 
 	// The name of the container the file belongs to.
 	ParentName = "parentname"
@@ -54,6 +59,9 @@ func GetUploadMetadata(info tusd.FileInfo) UploadMetadata {
 	data := Metadata(info.MetaData)
 	return data.GetUploadMetadata()
 }
+func (m *Metadata) SaveToInfo(info *tusd.FileInfo) {
+	info.MetaData = tusd.MetaData(*m)
+}
 
 // Returns uploadMetadata, which contains all the information about the file that a connector should need.
 func (m *Metadata) GetUploadMetadata() UploadMetadata {
@@ -71,6 +79,15 @@ func (m *Metadata) GetUploadMetadata() UploadMetadata {
 	}
 	return um
 
+}
+func (m *Metadata) GetRaw(k string) string {
+	return m.getExact(k)
+}
+func (m *Metadata) GetRawMetadata() string {
+	return m.getExact(MUploadMetadata)
+}
+func (m *Metadata) GetClientId() string {
+	return m.getExact(ClientId)
 }
 
 // Returns the DeferId, which is used for Deferred uploads.
@@ -101,31 +118,47 @@ func (m *Metadata) SetExtId(d string) {
 	m.set(extId, d)
 	um := m.GetUploadMetadata()
 	um.ExtId = d
-	m.replaceUploadMetadata(um)
+	m.ReplaceUploadMetadata(um)
 }
-func (m *Metadata) SetExtUploaded() {
+func (m *Metadata) SetExtUploaded() *Metadata {
 	m.set(extUploaded, "true")
+	return m
 }
+func (m *Metadata) SetClientId(cid string) *Metadata {
+	m.set(ClientId, cid)
+	return m
+}
+
 func (m *Metadata) SetAuthenticationPayload(a support.AuthenticationPayload) *Metadata {
 	if a.ClientId != "" {
-		m.set("client-id", a.ClientId)
+		m.SetClientId(a.ClientId)
 	}
 	if a.UserName != "" {
-		m.set("as-username", a.UserName)
+		m.set(AsUserName, a.UserName)
 	}
 	if a.UserSid != "" {
-		m.set("as-usersid", a.UserSid)
+		m.set(AsUserActiveDirectorySid, a.UserSid)
 	}
 	if a.UserId != "" {
-		m.set("as-userid", a.UserId)
+		m.set(AsUserId, a.UserId)
 	}
 	return m
+}
+
+func (m *Metadata) GetAuthenticationPayload() support.AuthenticationPayload {
+	return support.AuthenticationPayload{
+		m.getExact(ClientId),
+		"",
+		m.getExact(AsUserName),
+		m.getExact(AsUserId),
+		m.getExact(AsUserActiveDirectorySid),
+	}
 }
 func (m *Metadata) SetExtParentId(d string) {
 	m.set(extParentId, d)
 	um := m.GetUploadMetadata()
 	um.Parent.Id = d
-	m.replaceUploadMetadata(um)
+	m.ReplaceUploadMetadata(um)
 }
 
 func (m *Metadata) SetDeferId(d string) {
@@ -158,7 +191,7 @@ func (m *Metadata) unwrap(t interface{}, s string) {
 	m.set(s, b)
 }
 
-func (m *Metadata) replaceUploadMetadata(um UploadMetadata) {
+func (m *Metadata) ReplaceUploadMetadata(um UploadMetadata) {
 
 	newM := Metadata{}
 	newM.unwrap(um, MUploadMetadata)

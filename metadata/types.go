@@ -176,7 +176,7 @@ type Location struct {
 
 func (um UploadMetadata) ConvertToMetaData() Metadata {
 	m := Metadata{}
-	m.replaceUploadMetadata(um)
+	m.ReplaceUploadMetadata(um)
 	return m
 }
 
