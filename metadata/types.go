@@ -34,7 +34,7 @@ type UploadMetadata struct {
 	// The fileType, as in MimeType. Example: 'image/jpeg' or 'video/mp4'
 	FileType string `json:"fileType"`
 	// A short description of the current file, submitted by the user
-	FileSize    int    `json:"fileSize"`
+	FileSize    int64  `json:"fileSize"`
 	DisplayName string `json:"displayName"`
 	// A longer description of the current file, submitted by the uer.
 	Description string `json:"description"`
