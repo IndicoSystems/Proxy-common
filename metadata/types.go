@@ -139,6 +139,7 @@ type Person struct {
 
 type Parent struct {
 	Id          string     `json:"id"`
+	BatchId     string     `json:"batchId"`
 	Name        string     `json:"name"`
 	Description string     `json:"description"`
 	CreatedAt   *time.Time `json:"createdAt"`
@@ -194,6 +195,7 @@ func CreateSampleData() UploadMetadata {
 		"user@domainame",
 		Parent{
 			"all-metadata-test",
+			"",
 			"Burglar",
 			"Break-in downtown",
 			&now,
