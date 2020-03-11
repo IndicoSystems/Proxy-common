@@ -15,6 +15,7 @@ const (
 	UserId = "userid"
 	// Used by authenticators
 	ClientId                 = "client-id"
+	ReqId                    = "req-id"
 	AsUserName               = "as-username"
 	AsUserId                 = "as-user-id"
 	AsUserActiveDirectorySid = "as-user-sid"
@@ -88,6 +89,9 @@ func (m *Metadata) GetRawMetadata() string {
 }
 func (m *Metadata) GetClientId() string {
 	return m.getExact(ClientId)
+}
+func (m *Metadata) GetReqId() string {
+	return m.getExact(ReqId)
 }
 
 // Returns the DeferId, which is used for Deferred uploads.
