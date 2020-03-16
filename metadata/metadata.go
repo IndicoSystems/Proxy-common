@@ -3,7 +3,6 @@ package metadata
 import (
 	"encoding/base64"
 	"encoding/json"
-	"github.com/indicosystems/proxy/connectors/support"
 	"github.com/indicosystems/proxy/logger"
 	"github.com/sirupsen/logrus"
 	tusd "github.com/tus/tusd/pkg/handler"
@@ -132,32 +131,19 @@ func (m *Metadata) SetClientId(cid string) *Metadata {
 	m.set(ClientId, cid)
 	return m
 }
-
-func (m *Metadata) SetAuthenticationPayload(a support.AuthenticationPayload) *Metadata {
-	if a.ClientId != "" {
-		m.SetClientId(a.ClientId)
-	}
-	if a.UserName != "" {
-		m.set(AsUserName, a.UserName)
-	}
-	if a.UserSid != "" {
-		m.set(AsUserActiveDirectorySid, a.UserSid)
-	}
-	if a.UserId != "" {
-		m.set(AsUserId, a.UserId)
-	}
+func (m *Metadata) SetAsUserName(u string) *Metadata {
+	m.set(AsUserName, u)
+	return m
+}
+func (m *Metadata) SetAsActiveDirectoryUserSid(sid string) *Metadata {
+	m.set(AsUserActiveDirectorySid, sid)
+	return m
+}
+func (m *Metadata) SetAsUserId(id string) *Metadata {
+	m.set(AsUserId, id)
 	return m
 }
 
-func (m *Metadata) GetAuthenticationPayload() support.AuthenticationPayload {
-	return support.AuthenticationPayload{
-		m.getExact(ClientId),
-		"",
-		m.getExact(AsUserName),
-		m.getExact(AsUserId),
-		m.getExact(AsUserActiveDirectorySid),
-	}
-}
 func (m *Metadata) SetExtParentId(d string) {
 	m.set(extParentId, d)
 	um := m.GetUploadMetadata()
