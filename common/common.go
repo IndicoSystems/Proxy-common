@@ -5,9 +5,11 @@ package common
 import (
 	"context"
 	"github.com/indicosystems/proxy/metadata"
+	"github.com/indicosystems/proxy/persistor"
 	"github.com/sirupsen/logrus"
 	tusd "github.com/tus/tusd/pkg/handler"
 	"github.com/tus/tusd/pkg/s3store"
+	"time"
 )
 
 type S3Config struct {
@@ -30,11 +32,18 @@ type DataStore interface {
 	GetUpload(ctx context.Context, id string) (upload tusd.Upload, err error)
 	// Methods that extend the tusd.DataStore
 	SetInfo(info tusd.FileInfo) error
+	GetInfo(ctx context.Context, id string) (tusd.FileInfo, error)
 	RegisterConnector(interface{}) DataStore
+	GetQueue() persistor.Queue
+	AddToQueue(id, connectorId, actionType string, dueAt time.Time) error
 }
 
 type StoreCreator interface {
 	CreateS3Store(S3Config) (DataStore, error)
+}
+type QueueHandler interface {
+	HandleQueue(qi persistor.QueueItem) (complete bool, err error)
+	GetQueueHandlerId() string
 }
 
 // Will be called before the actual upload is created. (tusd.DataStore.NewUpload)
