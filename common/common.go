@@ -4,8 +4,8 @@ package common
 
 import (
 	"context"
+	"database/sql"
 	"github.com/indicosystems/proxy/metadata"
-	"github.com/indicosystems/proxy/persistor"
 	"github.com/sirupsen/logrus"
 	tusd "github.com/tus/tusd/pkg/handler"
 	"github.com/tus/tusd/pkg/s3store"
@@ -34,15 +34,25 @@ type DataStore interface {
 	SetInfo(info tusd.FileInfo) error
 	GetInfo(ctx context.Context, id string) (tusd.FileInfo, error)
 	RegisterConnector(interface{}) DataStore
-	GetQueue() persistor.Queue
+	GetQueue() QueueStorer
 	AddToQueue(id, connectorId, actionType string, dueAt time.Time) error
+}
+
+type QueueItem struct {
+	ID          string
+	ConnectorId string
+	Info        tusd.FileInfo
+	ActionType  string
+	Attempts    int
+	DueAt       time.Time
 }
 
 type StoreCreator interface {
 	CreateS3Store(S3Config) (DataStore, error)
 }
+
 type QueueHandler interface {
-	HandleQueue(qi persistor.QueueItem) (complete bool, err error)
+	HandleQueue(qi QueueItem) (complete bool, err error)
 	GetQueueHandlerId() string
 }
 
@@ -67,6 +77,29 @@ type Persistence interface {
 	Get(k string, v interface{}) (found bool, err error)
 	GetTusdInfo(id string) (*tusd.FileInfo, bool)
 	SetInfo(info tusd.FileInfo) error
+}
+type GetAllOptions struct {
+	ID          string
+	Limit       int
+	Increase    bool
+	ConnectorId string
+	ActionType  string
+	DueBefore   sql.NullTime
+	DueAfter    sql.NullTime
+	OnlyDue     bool
+}
+
+type QueueOptions struct {
+	Interval           time.Duration
+	PostponeBaseAmount time.Duration
+}
+
+type QueueStorer interface {
+	Complete(id string) error
+	Options() QueueOptions
+	GetAll(o GetAllOptions) (qis []QueueItem, found bool, err error)
+	AddToQueue(infoId, connectorId, actionType string, dueAt time.Time) error
+	UpdateQueueItem(id string, dueAt sql.NullTime, attempts int) error
 }
 
 type AuthenticationPayload struct {
