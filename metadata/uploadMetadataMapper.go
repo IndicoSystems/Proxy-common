@@ -201,6 +201,9 @@ func (um *UploadMetadata) SetStringField(f FieldMapType, s string) (err error) {
 			um.Subject[0].Country = s
 		}
 	case UMFSubjectDob:
+		if s == "" {
+			return
+		}
 		fmt.Println("attemting to parse date", f, s)
 
 		if a, ok := f.Args["layout"]; ok {
