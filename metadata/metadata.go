@@ -33,10 +33,10 @@ const (
 
 	Filename = "filename"
 
-	extId       = "extid"
-	extParentId = "extParentid"
+	ExtId       = "extid"
+	ExtParentId = "extParentid"
 	// Indicates whether the upload is verfied as completed.
-	extUploaded = "extUploaded"
+	ExtUploaded = "extUploaded"
 
 	// The data available to all, as submitted by the Client
 	MUploadMetadata = "UploadMetadata"
@@ -111,23 +111,23 @@ func (m *Metadata) GetFilename() string {
 	return m.getExact(Filename)
 }
 func (m *Metadata) GetExtId() string {
-	return m.getExact(extId)
+	return m.getExact(ExtId)
 }
 func (m *Metadata) GetExtParentId() string {
-	return m.getExact(extParentId)
+	return m.getExact(ExtParentId)
 }
 func (m *Metadata) GetExtUploaded() bool {
-	return m.getExact(extUploaded) == "true"
+	return m.getExact(ExtUploaded) == "true"
 }
 
 func (m *Metadata) SetExtId(d string) {
-	m.set(extId, d)
+	m.set(ExtId, d)
 	um := m.GetUploadMetadata()
 	um.ExtId = d
 	m.ReplaceUploadMetadata(um)
 }
 func (m *Metadata) SetExtUploaded() *Metadata {
-	m.set(extUploaded, "true")
+	m.set(ExtUploaded, "true")
 	return m
 }
 func (m *Metadata) SetClientId(cid string) *Metadata {
@@ -148,7 +148,7 @@ func (m *Metadata) SetAsUserId(id string) *Metadata {
 }
 
 func (m *Metadata) SetExtParentId(d string) {
-	m.set(extParentId, d)
+	m.set(ExtParentId, d)
 	um := m.GetUploadMetadata()
 	um.Parent.Id = d
 	m.ReplaceUploadMetadata(um)
