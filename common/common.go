@@ -82,7 +82,6 @@ type Persistence interface {
 type GetAllOptions struct {
 	ID          string
 	Limit       int
-	Increase    bool
 	ConnectorId string
 	ActionType  string
 	DueBefore   sql.NullTime
@@ -97,7 +96,7 @@ type QueueOptions struct {
 
 type QueueStorer interface {
 	Complete(id string) error
-	MarkErr(qi QueueItem, err string) error
+	MarkErr(qi QueueItem, err string, postpone bool) error
 	Options() QueueOptions
 	GetAll(o GetAllOptions) (qis []QueueItem, found bool, err error)
 	AddToQueue(infoId, connectorId, actionType string, dueAt time.Time) error
