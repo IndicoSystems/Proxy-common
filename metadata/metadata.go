@@ -92,6 +92,9 @@ func (m *Metadata) GetClientId() string {
 func (m *Metadata) GetReqId() string {
 	return m.getExact(ReqId)
 }
+func (m *Metadata) SetReqId(reqid string) {
+	m.set(ReqId, reqid)
+}
 
 // Returns the DeferId, which is used for Deferred uploads.
 func (m *Metadata) GetDeferId() string {
