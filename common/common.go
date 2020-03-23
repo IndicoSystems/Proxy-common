@@ -44,6 +44,7 @@ type QueueItem struct {
 	Info        tusd.FileInfo
 	ActionType  string
 	Attempts    int
+	Error       string
 	DueAt       time.Time
 }
 
@@ -96,10 +97,11 @@ type QueueOptions struct {
 
 type QueueStorer interface {
 	Complete(id string) error
+	MarkErr(qi QueueItem, err string) error
 	Options() QueueOptions
 	GetAll(o GetAllOptions) (qis []QueueItem, found bool, err error)
 	AddToQueue(infoId, connectorId, actionType string, dueAt time.Time) error
-	UpdateQueueItem(id string, dueAt sql.NullTime, attempts int) error
+	UpdateQueueItem(id string, dueAt sql.NullTime, attempts int, err string) error
 }
 
 type AuthenticationPayload struct {
