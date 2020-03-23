@@ -26,6 +26,24 @@ const (
 	UploadConfirmedComplete UploadCompleteStatus = "Confirmed"
 )
 
+type BaseConfig struct {
+	L logrus.FieldLogger
+	P Persistence
+	Q QueueStorer
+}
+
+type Persistence interface {
+	Set(k string, v interface{}) error
+	Get(k string, v interface{}) (found bool, err error)
+	GetTusdInfo(id string) (*tusd.FileInfo, bool)
+	// Should only be used to create the info
+	// TODO: Change to CreateTusdInfo
+	SetInfo(info tusd.FileInfo) error
+	SetUploadOffset(_id string, offset int64) error
+	// Can be used to mark an upload as complete with external information
+	SetUploaded(info tusd.FileInfo) error
+}
+
 type DataStore interface {
 	NewUpload(ctx context.Context, info tusd.FileInfo) (upload tusd.Upload, err error)
 
@@ -77,13 +95,6 @@ type UploadCompleter interface {
 	CompleteUpload(info tusd.FileInfo) (UploadResult, error)
 }
 
-// Persistence can be used to store information across requests.
-type Persistence interface {
-	Set(k string, v interface{}) error
-	Get(k string, v interface{}) (found bool, err error)
-	GetTusdInfo(id string) (*tusd.FileInfo, bool)
-	SetInfo(info tusd.FileInfo) error
-}
 type GetAllOptions struct {
 	ID          string
 	Limit       int
