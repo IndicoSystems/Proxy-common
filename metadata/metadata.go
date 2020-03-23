@@ -40,10 +40,6 @@ const (
 
 	// The data available to all, as submitted by the Client
 	MUploadMetadata = "UploadMetadata"
-	// DeferId - Internal use for deferred uploads
-	DeferId = "deferId"
-	// DeferredFiledId - Internal use for deferred uploads
-	DeferFileId = "deferFileId"
 )
 
 type Upl struct {
@@ -96,16 +92,6 @@ func (m *Metadata) SetReqId(reqid string) {
 	m.set(ReqId, reqid)
 }
 
-// Returns the DeferId, which is used for Deferred uploads.
-func (m *Metadata) GetDeferId() string {
-	return m.getExact(DeferId)
-}
-
-// Returns the DeferFileId, which is used for Deferred uploads.
-func (m *Metadata) GetDeferFileId() string {
-	return m.getExact(DeferFileId)
-}
-
 // Returns the DeferFileId, which is used for Deferred uploads.
 func (m *Metadata) GetFilename() string {
 	return m.getExact(Filename)
@@ -152,13 +138,6 @@ func (m *Metadata) SetExtParentId(d string) {
 	um := m.GetUploadMetadata()
 	um.Parent.Id = d
 	m.ReplaceUploadMetadata(um)
-}
-
-func (m *Metadata) SetDeferId(d string) {
-	m.set(DeferId, d)
-}
-func (m *Metadata) SetDeferFileId(d string) {
-	m.set(DeferFileId, d)
 }
 
 func (m *Metadata) getExact(key string) string {
