@@ -52,6 +52,11 @@ type StoreCreator interface {
 	CreateS3Store(S3Config) (DataStore, error)
 }
 
+type HealthReporter interface {
+	// Should report 200 if ok
+	GetHealth() (int, error)
+}
+
 type QueueHandler interface {
 	HandleQueue(qi QueueItem) (complete bool, err error)
 	GetQueueHandlerId() string
