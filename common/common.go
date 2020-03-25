@@ -74,7 +74,8 @@ type QueueItem struct {
 	// Any errors occured. Can be used to inform a sys-admin.
 	Error string
 	// The time of which the item is due.
-	DueAt time.Time
+	DueAt    time.Time
+	UploadId string
 }
 
 type StoreCreator interface {
