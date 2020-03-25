@@ -3,6 +3,7 @@ package metadata
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"github.com/indicosystems/proxy/logger"
 	"github.com/sirupsen/logrus"
 	tusd "github.com/tus/tusd/pkg/handler"
@@ -24,6 +25,12 @@ const (
 
 	// The mime type of the file.
 	FileType = "filetype"
+
+	// A queue-id in an installations queue-system. Only valid for some systems, like Indico Gateway.
+	ServiceQueueId = "serviceQueueId"
+
+	// Deprecated ConnectorConfig, if needed for the queue-handling
+	ConnectorConfig = "connectorConfig"
 
 	// The name given to the file by the user.
 	DisplayName = "displayname"
@@ -91,8 +98,29 @@ func (m *Metadata) GetReqId() string {
 func (m *Metadata) SetReqId(reqid string) {
 	m.set(ReqId, reqid)
 }
+func (m *Metadata) SetServiceQueueId(qID string) {
+	m.set(ServiceQueueId, qID)
+}
+func (m *Metadata) GetServiceQueueId() string {
+	return m.getExact(ServiceQueueId)
+}
 
-// Returns the DeferFileId, which is used for Deferred uploads.
+// Deprecated
+func (m *Metadata) SetConnectorConfig(cfg map[string]string) {
+	m.unwrap(cfg, ConnectorConfig)
+}
+
+// Deprecated
+func (m *Metadata) GetConnectorConfig() (map[string]string, error) {
+	var v map[string]string
+	err := m.getNested(ConnectorConfig, &v)
+	if err != nil {
+		l.WithError(err).Error("failed to get connectorConfig")
+		return v, errors.New("failed to get connectorConfig")
+	}
+	return v, nil
+}
+
 func (m *Metadata) GetFilename() string {
 	return m.getExact(Filename)
 }

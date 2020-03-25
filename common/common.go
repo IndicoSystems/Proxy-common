@@ -5,12 +5,17 @@ package common
 import (
 	"context"
 	"database/sql"
+	"github.com/indicosystems/proxy/info"
 	"github.com/indicosystems/proxy/metadata"
 	"github.com/sirupsen/logrus"
 	tusd "github.com/tus/tusd/pkg/handler"
 	"github.com/tus/tusd/pkg/s3store"
 	"time"
 )
+
+func IsDev() bool {
+	return info.IsDev()
+}
 
 type S3Config struct {
 	Address   string
@@ -57,13 +62,19 @@ type DataStore interface {
 }
 
 type QueueItem struct {
-	ID          string
+	ID string
+	// The connector that is responsible for this item.
 	ConnectorId string
-	Info        tusd.FileInfo
-	ActionType  string
-	Attempts    int
-	Error       string
-	DueAt       time.Time
+	// Information about the upload, like storage, metadata, size, offset etc.
+	Info tusd.FileInfo
+	// The kind of action that needs to be done, from the connector's perspective.
+	ActionType string
+	// How many attempts the queue-item has been trough.
+	Attempts int
+	// Any errors occured. Can be used to inform a sys-admin.
+	Error string
+	// The time of which the item is due.
+	DueAt time.Time
 }
 
 type StoreCreator interface {
@@ -76,7 +87,7 @@ type HealthReporter interface {
 }
 
 type QueueHandler interface {
-	HandleQueue(qi QueueItem) (complete bool, err error)
+	HandleQueue(qi QueueItem) (completeQueueItem, completeUpload bool, err error)
 	GetQueueHandlerId() string
 }
 
