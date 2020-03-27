@@ -1,10 +1,11 @@
 package metadata
 
 import (
-	"fmt"
+	"bytes"
 	"github.com/indicosystems/proxy/logger"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
+	"html/template"
 	"strconv"
 	"strings"
 	"time"
@@ -26,10 +27,11 @@ const (
 	UMFSubjectAltitude                        = "Subject.Altitude"
 	UMFSubjectCountry                         = "Subject.Country"
 	UMFSubjectDob                             = "Subject.Dob"
-	UMFSubjectFirstName                       = "Person.FirstName"
+	UMFSubjectFirstName                       = "Subject.FirstName"
+	UMFTags                                   = "Tags"
 	UMFSubjectGender                          = "Subject.Gender"
 	UMFSubjectId                              = "Subject.Id"
-	UMFSubjectLastName                        = "SubjectLastName"
+	UMFSubjectLastName                        = "Subject.LastName"
 	UMFSubjectLatitude                        = "Subject.Latitude"
 	UMFSubjectLongitude                       = "Subject.Longitude"
 	UMFSubjectMobile                          = "Subject.Mobile"
@@ -142,18 +144,54 @@ func (f FieldMapType) CheckStringCondition(existing string, newValue string) Upl
 	return ""
 }
 
-func (um *UploadMetadata) SetField(f FieldMapType, v interface{}) (err error) {
-	if s, ok := v.(string); ok {
-		return um.SetStringField(f, s)
-	}
-	err = errors.Errorf("Cannot map key '%s' to type '%T' with value '%+v'", f, v, v)
-	return
-}
+//func (um *UploadMetadata) SetField(f FieldMapType, v interface{}) (err error) {
+//	if s, ok := v.(string); ok {
+//		return um.SetStringField(f, s)
+//	}
+//	err = errors.Errorf("Cannot map key '%s' to type '%T' with value '%+v'", f, v, v)
+//	return
+//}
 
-func (um *UploadMetadata) SetStringField(f FieldMapType, s string) (err error) {
-	s = strings.TrimSpace(s)
-	l := lf.WithField("fieldMapType", f).WithField("value", s)
+func (um *UploadMetadata) SetStringField(f FieldMapType, field FormFields) (err error) {
+
+	s := strings.TrimSpace(field.Value)
+	l := lf.WithFields(map[string]interface{}{
+		"fieldMapType": f,
+		"fieldKey":     field.Key,
+		"fieldId":      field.FieldId,
+		"VisualName":   field.VisualName,
+	})
 	switch f.Field {
+	case UMFTags:
+		if s == "" {
+			break
+		}
+		for _, t := range um.Tags {
+			if s == t {
+				break
+			}
+		}
+		tag := s
+		format := f.Args["format"]
+		if format != "" {
+			templ, err := template.New(field.FieldId + field.Key).Parse(format)
+			if err != nil {
+				l.Warn("Failed to parse template for field")
+
+				break
+			}
+			var b bytes.Buffer
+			templ.Execute(&b, struct {
+				FormFields
+				Field UploadMetadataField
+			}{
+				FormFields: field,
+				Field:      f.Field,
+			})
+
+			tag = b.String()
+		}
+		um.Tags = append(um.Tags, tag)
 	case
 		UMFCaseNumber:
 		if f.CheckStringCondition(um.CaseNumber, s) == "" {
@@ -204,8 +242,6 @@ func (um *UploadMetadata) SetStringField(f FieldMapType, s string) (err error) {
 		if s == "" {
 			return
 		}
-		fmt.Println("attemting to parse date", f, s)
-
 		if a, ok := f.Args["layout"]; ok {
 			d, err := time.Parse(a, s)
 			if err != nil {
@@ -326,7 +362,7 @@ func (um *UploadMetadata) MapFormFields(fMap FieldMap) (err error) {
 		if !found {
 			continue
 		}
-		err := um.SetStringField(fKey, f.Value)
+		err := um.SetStringField(fKey, f)
 		if err != nil {
 			lf.WithError(err).WithFields(map[string]interface{}{
 				"fKey":  fKey,
