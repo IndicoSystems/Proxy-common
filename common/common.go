@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	tusd "github.com/tus/tusd/pkg/handler"
 	"github.com/tus/tusd/pkg/s3store"
+	"net/http"
 	"time"
 )
 
@@ -175,4 +176,83 @@ func AddIds(l logrus.FieldLogger, info tusd.FileInfo) logrus.FieldLogger {
 		"storage": info.Storage,
 		"reqId":   data.GetReqId(),
 	})
+}
+
+// Only used in CLI-mode, for printing the url to the uploaded file on the connectors service.
+type FileUrlPrinter interface {
+	PrintFileUrl(info tusd.FileInfo) (string, error)
+}
+
+// Runs before any other requests to authenticate
+type Authenticator interface {
+	Authenticate(r *http.Request, a AuthenticationPayload) error
+}
+
+// Can be used by clients to validate that their input is valid before submitting data.
+type Validator interface {
+	Validate(r *http.Request, a AuthenticationPayload, v ValidatePayload) (ValidateResponse, error)
+}
+type SupportedValidation struct {
+	UserID,
+	UserName,
+	Sid,
+	ParentID,
+	ParentName,
+	CaseID,
+	CaseName,
+	GroupName,
+	GroupID bool
+}
+
+type ValidateResponse struct {
+	UserID     ValidateUserResponse
+	UserName   ValidateUserResponse
+	Sid        ValidateUserResponse
+	ParentID   ValidateParentResponse
+	ParentName ValidateParentResponse
+	CaseID     ValidateCaseResponse
+	CaseName   ValidateCaseResponse
+	GroupName  ValidateGroupResponse
+	GroupID    ValidateGroupResponse
+}
+type ValidateNullableResponse struct {
+	UserID     *ValidateUserResponse   `json:",omitempty"`
+	UserName   *ValidateUserResponse   `json:",omitempty"`
+	Sid        *ValidateUserResponse   `json:",omitempty"`
+	ParentID   *ValidateParentResponse `json:",omitempty"`
+	ParentName *ValidateParentResponse `json:",omitempty"`
+	CaseID     *ValidateCaseResponse   `json:",omitempty"`
+	CaseName   *ValidateCaseResponse   `json:",omitempty"`
+	GroupName  *ValidateGroupResponse  `json:",omitempty"`
+	GroupID    *ValidateGroupResponse  `json:",omitempty"`
+}
+type ValidateCaseResponse struct {
+	ID string
+}
+
+type ValidateParentResponse struct {
+	ID string
+}
+type ValidateGroupResponse struct {
+	ID   string
+	Gid  string
+	Name string
+}
+
+type ValidateUserResponse struct {
+	ID       string
+	UserName string
+	AuthID   string
+}
+
+type ValidatePayload struct {
+	UserId     string
+	UserName   string
+	Sid        string
+	ParentId   string
+	ParentName string
+	CaseId     string
+	CaseName   string
+	GroupName  string
+	GroupId    string
 }
