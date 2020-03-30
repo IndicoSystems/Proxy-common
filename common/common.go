@@ -162,7 +162,7 @@ type UploadResult struct {
 	ExtId            string
 	CaseId           string
 	ExternalParentId string
-	ClientId         string
+	ClientMediaId    string `json:"ClientId"`
 }
 
 func (a *AuthenticationPayload) SetAuthenticationPayloadOnMetadata(m *metadata.Metadata) *metadata.Metadata {
