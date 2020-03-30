@@ -75,8 +75,9 @@ type QueueItem struct {
 	// Any errors occured. Can be used to inform a sys-admin.
 	Error string
 	// The time of which the item is due.
-	DueAt    time.Time
-	UploadId string
+	DueAt               time.Time
+	UploadId            string
+	BackoffLimitReached bool
 }
 
 type StoreCreator interface {
@@ -89,8 +90,19 @@ type HealthReporter interface {
 }
 
 type QueueHandler interface {
-	HandleQueue(qi QueueItem) (completeQueueItem, completeUpload bool, err error)
+	HandleQueue(qi QueueItem) QueueRunResult
 	GetQueueHandlerId() string
+}
+
+type QueueRunResult struct {
+	// Set to true to mark the queue-item as complete
+	CompleteQueueItem bool
+	// Set to true to mark the upload as complete. Will also complete the queue-item
+	CompleteUpload bool
+	// Set to true to make the queue back off on this item, and require manual intervention.
+	Backoff bool
+	// Additional info for the current error
+	Err string
 }
 
 // Will be called before the actual upload is created. (tusd.DataStore.NewUpload)
@@ -125,11 +137,11 @@ type QueueOptions struct {
 
 type QueueStorer interface {
 	Complete(id string) error
-	MarkErr(qi QueueItem, err string, postpone bool) error
+	MarkErr(qi QueueItem, err string, postpone bool, backoff bool) error
 	Options() QueueOptions
 	GetAll(o GetAllOptions) (qis []QueueItem, found bool, err error)
 	AddToQueue(infoId, connectorId, actionType string, dueAt time.Time) error
-	UpdateQueueItem(id string, dueAt sql.NullTime, attempts int, err string) error
+	UpdateQueueItem(id string, dueAt sql.NullTime, attempts int, err string, backoff bool) error
 }
 
 type AuthenticationPayload struct {
