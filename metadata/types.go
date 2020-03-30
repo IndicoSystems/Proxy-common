@@ -586,7 +586,7 @@ func (um UploadMetadata) ValidateRequiredFields(r []string) (missing []string) {
 				missing = append(missing, key)
 			}
 		default:
-			l.Fatalf("Field is not defined in ValidateRequiredFields: '%s'", key)
+			l.Fatalf("ToField is not defined in ValidateRequiredFields: '%s'", key)
 		}
 	}
 	return
