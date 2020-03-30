@@ -188,6 +188,11 @@ type Authenticator interface {
 	Authenticate(r *http.Request, a AuthenticationPayload) error
 }
 
+// Helpful function during development/mappers.
+type DryRunner interface {
+	DryRun(mdata metadata.Metadata) error
+}
+
 // Can be used by clients to validate that their input is valid before submitting data.
 type Validator interface {
 	Validate(r *http.Request, a AuthenticationPayload, v ValidatePayload) (ValidateResponse, error)
