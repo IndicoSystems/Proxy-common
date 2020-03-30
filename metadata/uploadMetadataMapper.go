@@ -298,7 +298,10 @@ func (um *UploadMetadata) AnyMapper(field string, format string, sm FieldsString
 	}{
 		U:       *um,
 		F:       sm,
-		Subject: um.Subject[0],
+		Subject: Person{},
+	}
+	if len(um.Subject) > 0 {
+		vars.Subject = um.Subject[0]
 	}
 	if err != nil {
 		l.WithError(err).WithFields(map[string]interface{}{
@@ -331,6 +334,10 @@ func (um *UploadMetadata) AnyMapper(field string, format string, sm FieldsString
 }
 
 func (um *UploadMetadata) SetStringField(sm FieldsStringMap, f FieldMapType, field FormFields) (err error) {
+	fieldName := strings.ToLower(f.ToField)
+	if strings.Contains(fieldName, "subject.") && len(um.Subject) == 0 {
+		return
+	}
 
 	s := strings.TrimSpace(field.Value)
 	l := lf.WithFields(map[string]interface{}{
@@ -362,7 +369,8 @@ func (um *UploadMetadata) SetStringField(sm FieldsStringMap, f FieldMapType, fie
 			s = b.String()
 		}
 	}
-	switch strings.ToLower(f.ToField) {
+
+	switch fieldName {
 	case UMDescription:
 		if f.CheckStringCondition(um.Description, s) == "" {
 			um.Description = s
