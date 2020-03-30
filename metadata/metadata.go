@@ -38,7 +38,8 @@ const (
 	// The Checksum of the file.
 	Checksum = "checksum"
 
-	Filename = "filename"
+	Filename     = "filename"
+	ErrorMessage = "errormsg"
 
 	ExtId       = "extid"
 	ExtParentId = "extParentid"
@@ -132,6 +133,13 @@ func (m *Metadata) GetExtParentId() string {
 }
 func (m *Metadata) GetExtUploaded() bool {
 	return m.getExact(ExtUploaded) == "true"
+}
+func (m *Metadata) GetErrorMessage() string {
+	return m.getExact(ErrorMessage)
+}
+func (m *Metadata) SetErrorMessage(msg string) *Metadata {
+	m.set(ErrorMessage, msg)
+	return m
 }
 
 func (m *Metadata) SetExtId(d string) {
