@@ -48,6 +48,7 @@ type Persistence interface {
 	SetUploadOffset(_id string, offset int64) error
 	// Can be used to mark an upload as complete with external information
 	SetUploaded(info tusd.FileInfo) error
+	SetConnectorProgress(_id string, written int64) error
 }
 
 type DataStore interface {
