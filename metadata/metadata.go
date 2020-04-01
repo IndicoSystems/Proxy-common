@@ -7,6 +7,7 @@ import (
 	"github.com/indicosystems/proxy/logger"
 	"github.com/sirupsen/logrus"
 	tusd "github.com/tus/tusd/pkg/handler"
+	"strconv"
 	"strings"
 )
 
@@ -15,6 +16,7 @@ const (
 	UserId = "userid"
 	// Used by authenticators
 	ClientId                 = "client-id"
+	ConnectorWritten         = "connector-written"
 	ReqId                    = "req-id"
 	AsUserName               = "as-username"
 	AsUserId                 = "as-user-id"
@@ -101,6 +103,20 @@ func (m *Metadata) SetReqId(reqid string) {
 }
 func (m *Metadata) SetServiceQueueId(qID string) {
 	m.set(ServiceQueueId, qID)
+}
+func (m *Metadata) GetConnectorWritten() int64 {
+	w := m.getExact(ConnectorWritten)
+	if w == "" {
+		return -1
+	}
+	p, err := strconv.ParseInt(w, 10, 64)
+	if err != nil {
+		l.Warn("Could not parse connectorWritten")
+	}
+	return p
+}
+func (m *Metadata) SetConnectorWritten(written int64) {
+	m.set(ConnectorWritten, strconv.FormatInt(written, 10))
 }
 func (m *Metadata) GetServiceQueueId() string {
 	return m.getExact(ServiceQueueId)
