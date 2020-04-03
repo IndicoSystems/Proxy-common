@@ -42,6 +42,7 @@ type Persistence interface {
 	Set(k string, v interface{}) error
 	Get(k string, v interface{}) (found bool, err error)
 	GetTusdInfo(id string) (*tusd.FileInfo, bool)
+	GetTusdInfos(ids []string) ([]*tusd.FileInfo, error)
 	// Should only be used to create the info
 	// TODO: Change to CreateTusdInfo
 	SetInfo(info tusd.FileInfo) error
