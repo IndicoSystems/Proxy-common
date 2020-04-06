@@ -168,6 +168,10 @@ func (m *Metadata) SetExtUploaded() *Metadata {
 	m.set(ExtUploaded, "true")
 	return m
 }
+func (m *Metadata) Apply(info *tusd.FileInfo) tusd.FileInfo {
+	info.MetaData = tusd.MetaData(*m)
+	return *info
+}
 func (m *Metadata) SetClientId(cid string) *Metadata {
 	m.set(ClientId, cid)
 	return m
