@@ -24,6 +24,7 @@ const (
 
 	// The name of the container the file belongs to.
 	ParentName = "parentname"
+	SSN        = "__ssn"
 
 	// The mime type of the file.
 	FileType = "filetype"
