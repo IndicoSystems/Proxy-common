@@ -225,6 +225,12 @@ func (m *Metadata) ReplaceUploadMetadata(um UploadMetadata) {
 	newM := Metadata{}
 	newM.unwrap(um, MUploadMetadata)
 	(*m)[MUploadMetadata] = newM[MUploadMetadata]
+	if um.ClientMediaId != "" {
+		m.set(ClientId, um.ClientMediaId)
+	}
+	if um.ExtId != "" {
+		m.set(ExtId, um.ExtId)
+	}
 	m.set(MUploadMetadata, newM.getExact(MUploadMetadata))
 }
 
