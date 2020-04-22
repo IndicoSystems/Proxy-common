@@ -213,7 +213,9 @@ type Validator interface {
 }
 
 type ConnectorFeatures struct {
+	// The minimum chunk-size to allow. Setting this to -1 disallows chunks, and all files must be uploaded in a single chunk.
 	MinChunkSize int64
+	// The maximum chunk-size to allow.
 	MaxChunkSize int64
 }
 
