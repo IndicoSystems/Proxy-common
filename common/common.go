@@ -211,6 +211,16 @@ type DryRunner interface {
 type Validator interface {
 	Validate(r *http.Request, a AuthenticationPayload, v ValidatePayload) (ValidateResponse, error)
 }
+
+type ConnectorFeatures struct {
+	MinChunkSize int64
+	MaxChunkSize int64
+}
+
+// Can be used to issue what features should be enabled
+type FeatureAnnouncer interface {
+	AnnounceFeatures() ConnectorFeatures
+}
 type SupportedValidation struct {
 	UserID,
 	UserName,
