@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"github.com/indicosystems/proxy/info"
 	"github.com/indicosystems/proxy/logger"
 	"github.com/sirupsen/logrus"
 	tusd "github.com/tus/tusd/pkg/handler"
@@ -81,10 +82,21 @@ func (m *Metadata) GetUploadMetadata() UploadMetadata {
 		panic("Expected upload-metadata not to be nil")
 	}
 	if um.Parent.Id == "" && um.Parent.Name == "" && um.Parent.BatchId == "" {
-		l.WithFields(map[string]interface{}{
-			"clientMediaId":   m.GetClientId(),
-			"from-request-id": m.GetReqId(),
-		}).Warn("Parent does not have an ID, BatchId nor a Name (GetUploadMetadata)")
+		if info.IsDebugMode() {
+			l.WithFields(map[string]interface{}{
+				"clientMediaId":   m.GetClientId(),
+				"from-request-id": m.GetReqId(),
+				"m":               m,
+				"um":              um,
+			}).Warn("Parent does not have an ID, BatchId nor a Name (GetUploadMetadata)")
+
+		} else {
+
+			l.WithFields(map[string]interface{}{
+				"clientMediaId":   m.GetClientId(),
+				"from-request-id": m.GetReqId(),
+			}).Warn("Parent does not have an ID, BatchId nor a Name (GetUploadMetadata)")
+		}
 
 	}
 	return um
