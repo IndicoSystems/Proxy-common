@@ -163,7 +163,7 @@ type Location struct {
 	// The text for the current location, like the current address, city, etc.
 	Text string `json:"text"`
 	// Geo-location
-	Latitude float64 `json:"latutude"`
+	Latitude float64 `json:"latitude"`
 	// Geo-location
 	Longitude float64 `json:"longitude"`
 	Address   string  `json:"address"`
