@@ -90,6 +90,22 @@ func AnyMapperConfig() (fm map[string]string) {
 
 }
 
+type ToFormField struct {
+	VisualName string
+	Required   bool
+	Format     string
+	Debug      bool
+}
+
+func ToFormFieldMap() (fm map[string]ToFormField) {
+	err := viper.UnmarshalKey("toFormFieldMap", &fm)
+	if err != nil {
+		lf.Fatalf("could not unmarshal to-field-mapper", err)
+	}
+	return
+
+}
+
 type FieldMapType struct {
 	ToField   UploadMetadataField
 	Condition UploadMetadataFieldCondition
@@ -274,6 +290,92 @@ func Regex(p, t string) string {
 		return ""
 	}
 	return r.FindString(t)
+}
+
+// Maps anything to a FormField
+func (um *UploadMetadata) ToFieldMapper(key string, f ToFormField, sm FieldsStringMap) {
+	if f.Format == "" || key == "" || f.VisualName == "" {
+		if f.Debug {
+			l.WithFields(
+				map[string]interface{}{
+					"key":            key,
+					"toFormField":    f,
+					"uploadMetadata": um,
+					"fieldStringMap": sm,
+				}).Debug("Attempted to map {key} field, but a required field is empty")
+		}
+		return
+	}
+	s := ""
+	templ, err := template.New("field").
+		Funcs(template.FuncMap{
+			"regex":     Regex,
+			"dateLong":  FmtDateLong,
+			"dateShort": FmtDateShort,
+			"date": func(layout string, t time.Time) string {
+				return t.Format(layout)
+			},
+		}).
+		Parse(f.Format)
+	vars := struct {
+		U       UploadMetadata
+		F       FieldsStringMap
+		Subject Person
+	}{
+		U:       *um,
+		F:       sm,
+		Subject: Person{},
+	}
+	if len(um.Subject) > 0 {
+		vars.Subject = um.Subject[0]
+	}
+	if err != nil {
+		l.WithError(err).WithFields(map[string]interface{}{
+			"field": f,
+		}).Warn("Failed to parse the template for toFieldMap {field}")
+		return
+	} else {
+		var b bytes.Buffer
+
+		templ.Execute(&b, vars)
+
+		s = strings.TrimSpace(b.String())
+	}
+	if s == "" {
+		if f.Debug {
+			l.WithFields(
+				map[string]interface{}{
+					"key":            key,
+					"toFormField":    f,
+					"uploadMetadata": um,
+					"fieldStringMap": sm,
+				}).Debug("Attempted to map {key} field, but the result was empty")
+		}
+		return
+	}
+	ff := FormFields{
+		Key:            key,
+		FieldId:        key,
+		TranslationKey: key,
+		VisualName:     f.VisualName,
+		Value:          s,
+		Required:       f.Required,
+		DataType:       "String",
+		ValidationRule: ValidationRule{},
+	}
+	if f.Debug {
+		l.WithFields(
+			map[string]interface{}{
+				"key":            key,
+				"value":          s,
+				"formField":      ff,
+				"toFormField":    f,
+				"uploadMetadata": um,
+				"fieldStringMap": sm,
+			}).Debug("Mapped the field {key} to {value}")
+	}
+	um.FormFields = append(um.FormFields, ff)
+
 }
 
 func (um *UploadMetadata) AnyMapper(field string, format string, sm FieldsStringMap) {
@@ -575,8 +677,13 @@ func (fm FieldMap) Get(key string) (FieldMapType, bool) {
 	return v, v.ToField != ""
 }
 
-func (um *UploadMetadata) MapFormFields(fMap FieldMap) (err error) {
-	am := AnyMapperConfig()
+var (
+	am   = AnyMapperConfig()
+	fm   = ToFormFieldMap()
+	fMap = FieldMapperConfig()
+)
+
+func (um *UploadMetadata) MapFormFields() (err error) {
 	sm := um.FormFieldsToStringMap()
 	for _, f := range um.FormFields {
 		fKey, found := fMap.FindFromField(f)
@@ -595,5 +702,9 @@ func (um *UploadMetadata) MapFormFields(fMap FieldMap) (err error) {
 	for key, format := range am {
 		um.AnyMapper(key, format, sm)
 	}
+	for key, f := range fm {
+		um.ToFieldMapper(key, f, sm)
+	}
+
 	return
 }
