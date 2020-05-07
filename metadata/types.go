@@ -148,7 +148,8 @@ type Parent struct {
 
 type Creator struct {
 	// Can be an identifier, like an officer's badge-id, or a userId in the system.
-	SysId string `json:"sysId"`
+	SysId      string `json:"sysId"`
+	Attributes map[string]string
 	Person
 }
 
@@ -227,6 +228,9 @@ func CreateSampleData() UploadMetadata {
 		int64((44*time.Minute + 8*time.Second + 36*time.Millisecond) / time.Millisecond),
 		Creator{
 			"Downtown district",
+			map[string]string{
+				"any-string": "is allowed",
+			},
 			Person{
 				"Jane",
 				"Doe",
