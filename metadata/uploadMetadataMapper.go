@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/indicosystems/proxy/config"
+	"github.com/indicosystems/proxy/info"
 	"github.com/indicosystems/proxy/logger"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
@@ -91,19 +92,19 @@ func AnyMapperConfig() (fm map[string]string) {
 }
 
 type ToFormField struct {
+	Key        string
 	VisualName string
 	Required   bool
 	Format     string
 	Debug      bool
 }
 
-func ToFormFieldMap() (fm map[string]ToFormField) {
+func ToFormFieldMap() (fm []ToFormField) {
 	err := viper.UnmarshalKey("toFormFieldMap", &fm)
 	if err != nil {
 		lf.Fatalf("could not unmarshal to-field-mapper", err)
 	}
 	return
-
 }
 
 type FieldMapType struct {
@@ -293,12 +294,12 @@ func Regex(p, t string) string {
 }
 
 // Maps anything to a FormField
-func (um *UploadMetadata) ToFieldMapper(key string, f ToFormField, sm FieldsStringMap) {
-	if f.Format == "" || key == "" || f.VisualName == "" {
+func (um *UploadMetadata) ToFieldMapper(f ToFormField, sm FieldsStringMap) {
+	if f.Format == "" || f.Key == "" || f.VisualName == "" {
 		if f.Debug {
 			l.WithFields(
 				map[string]interface{}{
-					"key":            key,
+					"key":            f.Key,
 					"toFormField":    f,
 					"uploadMetadata": um,
 					"fieldStringMap": sm,
@@ -345,7 +346,7 @@ func (um *UploadMetadata) ToFieldMapper(key string, f ToFormField, sm FieldsStri
 		if f.Debug {
 			l.WithFields(
 				map[string]interface{}{
-					"key":            key,
+					"key":            f.Key,
 					"toFormField":    f,
 					"uploadMetadata": um,
 					"fieldStringMap": sm,
@@ -354,9 +355,9 @@ func (um *UploadMetadata) ToFieldMapper(key string, f ToFormField, sm FieldsStri
 		return
 	}
 	ff := FormFields{
-		Key:            key,
-		FieldId:        key,
-		TranslationKey: key,
+		Key:            f.Key,
+		FieldId:        f.Key,
+		TranslationKey: f.Key,
 		VisualName:     f.VisualName,
 		Value:          s,
 		Required:       f.Required,
@@ -366,7 +367,7 @@ func (um *UploadMetadata) ToFieldMapper(key string, f ToFormField, sm FieldsStri
 	if f.Debug {
 		l.WithFields(
 			map[string]interface{}{
-				"key":            key,
+				"key":            f.Key,
 				"value":          s,
 				"formField":      ff,
 				"toFormField":    f,
@@ -657,15 +658,15 @@ func (um UploadMetadata) FormFieldsToStringMap() FieldsStringMap {
 	for _, f := range um.FormFields {
 		val := strings.TrimSpace(f.Value)
 		if f.Key != "" {
-			m[strings.ToLower(f.Key)] = val
+			m[f.Key] = val
 			m[f.Key] = val
 		}
 		if f.FieldId != "" {
-			m[strings.ToLower(f.FieldId)] = val
+			m[f.FieldId] = val
 			m[f.FieldId] = val
 		}
 		if f.TranslationKey != "" {
-			m[strings.ToLower(f.TranslationKey)] = val
+			m[f.TranslationKey] = val
 			m[f.TranslationKey] = f.Value
 		}
 	}
@@ -684,6 +685,13 @@ var (
 )
 
 func (um *UploadMetadata) MapFormFields() (err error) {
+	if info.IsDebugMode() {
+		l.WithFields(map[string]interface{}{
+			"anyMapper":   am,
+			"toFormField": fm,
+			"fieldMap":    fMap,
+		}).Debug("Mapping uploadMetadata using these maps")
+	}
 	sm := um.FormFieldsToStringMap()
 	for _, f := range um.FormFields {
 		fKey, found := fMap.FindFromField(f)
@@ -702,8 +710,8 @@ func (um *UploadMetadata) MapFormFields() (err error) {
 	for key, format := range am {
 		um.AnyMapper(key, format, sm)
 	}
-	for key, f := range fm {
-		um.ToFieldMapper(key, f, sm)
+	for _, f := range fm {
+		um.ToFieldMapper(f, sm)
 	}
 
 	return
