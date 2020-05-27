@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/indicosystems/proxy/info"
 	"github.com/indicosystems/proxy/logger"
 	"github.com/sirupsen/logrus"
@@ -51,8 +52,12 @@ const (
 	ExtUploaded = "extUploaded"
 
 	// The data available to all, as submitted by the Client
-	MUploadMetadata = "UploadMetadata"
+	MUploadMetadata                   = "UploadMetadata"
+	ClientMessages                    = "ClientMessages"
+	CaseNumberIgnored InternalInfoStr = "CaseNumberIgnored"
 )
+
+type InternalInfoStr string
 
 type Upl struct {
 	UploadMetadata
@@ -136,6 +141,65 @@ func (m *Metadata) SetConnectorWritten(written int64) {
 }
 func (m *Metadata) GetServiceQueueId() string {
 	return m.getExact(ServiceQueueId)
+}
+
+type ClientMessage struct {
+	Kind    InternalInfoStr
+	Message string
+}
+
+func formatClientString(s string) string {
+	if s == "" {
+		return ""
+	}
+	return strings.TrimSpace(s)
+}
+
+// Appends ClientMessages, but ensures uniqueness.
+func (m *Metadata) AppendClientMessage(cMsg ClientMessage) {
+	if cMsg.Kind == "" || cMsg.Message == "" {
+		return
+	}
+	message := formatClientString(cMsg.Message)
+	kind := InternalInfoStr(formatClientString(string(cMsg.Kind)))
+
+	if message == "" {
+		return
+	}
+	if kind == "" {
+		return
+	}
+	existing := m.GetClientMessages()
+	// Check for uniqueness
+	for _, ex := range existing {
+		if message == ex.Message && kind == ex.Kind {
+			return
+		}
+	}
+	existing = append(existing, ClientMessage{
+		Kind:    kind,
+		Message: message,
+	})
+	fmt.Println("appended", existing)
+	b, err := json.Marshal(existing)
+	if err != nil {
+		l.WithError(err).Error("Could not marshal clientMessage")
+		return
+	}
+	m.set(ClientMessages, string(b))
+}
+func (m *Metadata) GetClientMessages() (cMsgs []ClientMessage) {
+	ex := m.getExact(ClientMessages)
+	if ex == "" {
+		return
+	}
+	err := json.Unmarshal([]byte(ex), &cMsgs)
+	if err != nil {
+		l.WithError(err).Error("Could not unmarshal clientMessage")
+		return
+	}
+
+	return
 }
 
 // Deprecated
