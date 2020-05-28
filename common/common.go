@@ -224,15 +224,15 @@ type FeatureAnnouncer interface {
 	AnnounceFeatures() ConnectorFeatures
 }
 type SupportedValidation struct {
-	UserID,
-	UserName,
-	Sid,
-	ParentID,
-	ParentName,
-	CaseID,
-	CaseName,
-	GroupName,
-	GroupID bool
+	UserID     bool `json:",omitempty"`
+	UserName   bool `json:",omitempty"`
+	Sid        bool `json:",omitempty"`
+	ParentID   bool `json:",omitempty"`
+	ParentName bool `json:",omitempty"`
+	CaseID     bool `json:",omitempty"`
+	CaseName   bool `json:",omitempty"`
+	GroupName  bool `json:",omitempty"`
+	GroupID    bool `json:",omitempty"`
 }
 
 type ValidateResponse struct {
@@ -286,4 +286,88 @@ type ValidatePayload struct {
 	CaseName   string
 	GroupName  string
 	GroupId    string
+}
+
+type SearchResultItem struct {
+	ID             string `json:",omitempty"`
+	DisplayName    string `json:",omitempty"`
+	AltID          string `json:",omitempty"`
+	AltDisplayName string `json:",omitempty"`
+}
+
+type HasMore string
+
+const (
+	HasMoreTrue    HasMore = "YES"
+	HasMoreUnknown HasMore = ""
+	HasMoreNo      HasMore = "NO"
+)
+
+type SearchAggregate struct {
+	Offset  int
+	HasMore HasMore            `json:",omitempty"`
+	Items   []SearchResultItem `json:",omitempty"`
+}
+
+type SearchResult struct {
+	User   *SearchAggregate `json:",omitempty"`
+	Parent *SearchAggregate `json:",omitempty"`
+	Case   *SearchAggregate `json:",omitempty"`
+	Group  *SearchAggregate `json:",omitempty"`
+}
+
+type SearchInput struct {
+	Query string
+	Kind  string
+	Limit int
+}
+
+type SearchOptions struct {
+	RequiresAuthentication bool
+}
+
+type SearchHandler interface {
+	Search(AuthenticationPayload, SearchInput) (SearchResult, error)
+	SearchCacheKey(AuthenticationPayload, SearchInput) string
+	SearchableFields() (*SupportedSearches, SearchOptions)
+}
+type SupportedSearches struct {
+	UserID     bool `json:",omitempty"`
+	UserName   bool `json:",omitempty"`
+	Sid        bool `json:",omitempty"`
+	ParentID   bool `json:",omitempty"`
+	ParentName bool `json:",omitempty"`
+	CaseID     bool `json:",omitempty"`
+	CaseName   bool `json:",omitempty"`
+	GroupName  bool `json:",omitempty"`
+	GroupID    bool `json:",omitempty"`
+}
+
+func (s *SupportedSearches) MapEnabled() map[string]bool {
+	a := map[string]bool{}
+	if s.UserID {
+		a["UserID"] = true
+	}
+	if s.UserName {
+		a["UserName"] = true
+	}
+	if s.Sid {
+		a["Sid"] = true
+	}
+	if s.ParentName {
+		a["ParentName"] = true
+	}
+	if s.CaseID {
+		a["CaseID"] = true
+	}
+	if s.CaseName {
+		a["CaseName"] = true
+	}
+	if s.GroupName {
+		a["GroupName"] = true
+	}
+	if s.GroupID {
+		a["GroupID"] = true
+	}
+	return a
 }
