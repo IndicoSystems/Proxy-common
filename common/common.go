@@ -5,7 +5,7 @@ package common
 import (
 	"context"
 	"database/sql"
-	"github.com/indicosystems/proxy/metadata"
+	"github.com/indicosystems/proxy-common/metadata"
 	"github.com/sirupsen/logrus"
 	tusd "github.com/tus/tusd/pkg/handler"
 	"github.com/tus/tusd/pkg/s3store"
