@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/indicosystems/proxy/info"
 	"github.com/sirupsen/logrus"
 	tusd "github.com/tus/tusd/pkg/handler"
 	"strconv"
@@ -62,10 +61,16 @@ type Upl struct {
 	UploadMetadata
 }
 
-var l logrus.FieldLogger = logrus.StandardLogger()
+var (
+	l         logrus.FieldLogger = logrus.StandardLogger()
+	debugMode                    = false
+)
 
 func AssignMetaLogger(logger logrus.FieldLogger) {
 	l = logger
+}
+func Debug(enable bool) {
+	debugMode = enable
 }
 
 type Metadata map[string]string
@@ -90,7 +95,7 @@ func (m *Metadata) GetUploadMetadata() UploadMetadata {
 		panic("Expected upload-metadata not to be nil")
 	}
 	if um.Parent.Id == "" && um.Parent.Name == "" && um.Parent.BatchId == "" {
-		if info.IsDebugMode() {
+		if debugMode {
 			l.WithFields(map[string]interface{}{
 				"clientMediaId":   m.GetClientId(),
 				"from-request-id": m.GetReqId(),
