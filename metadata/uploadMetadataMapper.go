@@ -196,14 +196,6 @@ func (f FieldMapType) CheckStringCondition(existing string, newValue string) Upl
 	return ""
 }
 
-//func (um *UploadMetadata) SetField(f FieldMapType, v interface{}) (err error) {
-//	if s, ok := v.(string); ok {
-//		return um.SetStringField(f, s)
-//	}
-//	err = errors.Errorf("Cannot map key '%s' to type '%T' with value '%+v'", f, v, v)
-//	return
-//}
-
 type locale struct {
 	locale string
 	//pluralsCardinal        []locales.PluralRule
@@ -298,7 +290,7 @@ func Regex(p, t string) string {
 }
 
 // Maps anything to a FormField
-func (um *UploadMetadata) ToFieldMapper(f ToFormField, sm FieldsStringMap) {
+func ToFieldMapper(um *UploadMetadata, f ToFormField, sm FieldsStringMap) {
 	if f.Format == "" || f.Key == "" || f.VisualName == "" {
 		if f.Debug {
 			l.WithFields(
@@ -383,7 +375,7 @@ func (um *UploadMetadata) ToFieldMapper(f ToFormField, sm FieldsStringMap) {
 
 }
 
-func (um *UploadMetadata) AnyMapper(field string, format string, sm FieldsStringMap) {
+func AnyMapper(um *UploadMetadata, field string, format string, sm FieldsStringMap) {
 	if format == "" || field == "" {
 		return
 	}
@@ -440,7 +432,7 @@ func (um *UploadMetadata) AnyMapper(field string, format string, sm FieldsString
 	}
 }
 
-func (um *UploadMetadata) SetStringField(sm FieldsStringMap, f FieldMapType, field FormFields) (err error) {
+func SetStringField(um *UploadMetadata, sm FieldsStringMap, f FieldMapType, field FormFields) (err error) {
 	fieldName := strings.ToLower(f.ToField)
 	if strings.Contains(fieldName, "subject.") && len(um.Subject) == 0 {
 		return
@@ -657,7 +649,7 @@ func (fm FieldMap) FindFromField(ff FormFields) (FieldMapType, bool) {
 
 type FieldsStringMap map[string]string
 
-func (um UploadMetadata) FormFieldsToStringMap() FieldsStringMap {
+func FormFieldsToStringMap(um UploadMetadata) FieldsStringMap {
 	m := map[string]string{}
 	for _, f := range um.FormFields {
 		val := strings.TrimSpace(f.Value)
@@ -688,7 +680,7 @@ var (
 	fMap = FieldMapperConfig()
 )
 
-func (um *UploadMetadata) MapFormFields() (err error) {
+func MapFormFields(um *UploadMetadata) (err error) {
 	if info.IsDebugMode() {
 		l.WithFields(map[string]interface{}{
 			"anyMapper":   am,
@@ -696,14 +688,14 @@ func (um *UploadMetadata) MapFormFields() (err error) {
 			"fieldMap":    fMap,
 		}).Debug("Mapping uploadMetadata using these maps")
 	}
-	sm := um.FormFieldsToStringMap()
+	sm := FormFieldsToStringMap(*um)
 	for _, f := range um.FormFields {
 		fKey, found := fMap.FindFromField(f)
 
 		if !found {
 			continue
 		}
-		err := um.SetStringField(sm, fKey, f)
+		err := SetStringField(um, sm, fKey, f)
 		if err != nil {
 			lf.WithError(err).WithFields(map[string]interface{}{
 				"fKey":  fKey,
@@ -712,10 +704,10 @@ func (um *UploadMetadata) MapFormFields() (err error) {
 		}
 	}
 	for key, format := range am {
-		um.AnyMapper(key, format, sm)
+		AnyMapper(um, key, format, sm)
 	}
 	for _, f := range fm {
-		um.ToFieldMapper(f, sm)
+		ToFieldMapper(um, f, sm)
 	}
 
 	return
