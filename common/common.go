@@ -5,7 +5,6 @@ package common
 import (
 	"context"
 	"database/sql"
-	"github.com/indicosystems/proxy/info"
 	"github.com/indicosystems/proxy/metadata"
 	"github.com/sirupsen/logrus"
 	tusd "github.com/tus/tusd/pkg/handler"
@@ -13,10 +12,6 @@ import (
 	"net/http"
 	"time"
 )
-
-func IsDev() bool {
-	return info.IsDev()
-}
 
 type S3Config struct {
 	Address   string
