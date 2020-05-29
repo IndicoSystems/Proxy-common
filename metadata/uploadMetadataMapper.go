@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/indicosystems/proxy/config"
 	"github.com/indicosystems/proxy/info"
-	"github.com/indicosystems/proxy/logger"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"html/template"
 	"regexp"
@@ -15,7 +15,11 @@ import (
 	"time"
 )
 
-var lf = logger.Get("field-mapper")
+var lf logrus.FieldLogger = logrus.StandardLogger()
+
+func AssignFieldLogger(l logrus.FieldLogger) {
+	lf = l
+}
 
 type UploadMetadataField = string
 type UploadMetadataFieldCondition = string

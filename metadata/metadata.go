@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/indicosystems/proxy/info"
-	"github.com/indicosystems/proxy/logger"
 	"github.com/sirupsen/logrus"
 	tusd "github.com/tus/tusd/pkg/handler"
 	"strconv"
@@ -63,7 +62,11 @@ type Upl struct {
 	UploadMetadata
 }
 
-var l logrus.FieldLogger = logger.Get("metadata")
+var l logrus.FieldLogger = logrus.StandardLogger()
+
+func AssignMetaLogger(logger logrus.FieldLogger) {
+	l = logger
+}
 
 type Metadata map[string]string
 type Mapper func(data Metadata) Metadata
