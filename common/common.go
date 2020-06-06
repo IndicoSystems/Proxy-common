@@ -202,6 +202,10 @@ type DryRunner interface {
 	DryRun(mdata metadata.Metadata) error
 }
 
+type MetadataWriter interface {
+	OutputMetadata(info tusd.FileInfo) ([]byte, string, error)
+}
+
 // Can be used by clients to validate that their input is valid before submitting data.
 type Validator interface {
 	Validate(r *http.Request, a AuthenticationPayload, v ValidatePayload) (ValidateResponse, error)
