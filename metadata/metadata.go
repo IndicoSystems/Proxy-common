@@ -26,6 +26,7 @@ const (
 	ParentName = "parentname"
 	SSN        = "__ssn"
 
+	ClientMediaId                 = "client-media-id"
 	// The mime type of the file.
 	FileType = "filetype"
 
@@ -313,7 +314,7 @@ func (m *Metadata) ReplaceUploadMetadata(um UploadMetadata) {
 	newM.unwrap(um, MUploadMetadata)
 	(*m)[MUploadMetadata] = newM[MUploadMetadata]
 	if um.ClientMediaId != "" {
-		m.set(ClientId, um.ClientMediaId)
+		m.set(ClientMediaId, um.ClientMediaId)
 	}
 	if um.ExtId != "" {
 		m.set(ExtId, um.ExtId)
