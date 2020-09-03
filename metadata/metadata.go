@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/sirupsen/logrus"
-	tusd "github.com/tus/tusd/pkg/handler"
 	"strconv"
 	"strings"
+
+	"github.com/sirupsen/logrus"
+	tusd "github.com/tus/tusd/pkg/handler"
 )
 
 const (
@@ -26,7 +27,7 @@ const (
 	ParentName = "parentname"
 	SSN        = "__ssn"
 
-	ClientMediaId                 = "client-media-id"
+	ClientMediaId = "client-media-id"
 	// The mime type of the file.
 	FileType = "filetype"
 
@@ -48,7 +49,8 @@ const (
 	ExtId       = "extid"
 	ExtParentId = "extParentid"
 	// Indicates whether the upload is verfied as completed.
-	ExtUploaded = "extUploaded"
+	ExtUploaded  = "extUploaded"
+	ExtConfirmed = "extConfirmed"
 
 	// The data available to all, as submitted by the Client
 	MUploadMetadata                   = "UploadMetadata"
@@ -239,6 +241,9 @@ func (m *Metadata) GetExtParentId() string {
 func (m *Metadata) GetExtUploaded() bool {
 	return m.getExact(ExtUploaded) == "true"
 }
+func (m *Metadata) GetExtConfirmed() bool {
+	return m.getExact(ExtConfirmed) == "true"
+}
 func (m *Metadata) GetErrorMessage() string {
 	return m.getExact(ErrorMessage)
 }
@@ -255,6 +260,10 @@ func (m *Metadata) SetExtId(d string) {
 }
 func (m *Metadata) SetExtUploaded() *Metadata {
 	m.set(ExtUploaded, "true")
+	return m
+}
+func (m *Metadata) SetExtConfirmed() *Metadata {
+	m.set(ExtConfirmed, "true")
 	return m
 }
 func (m *Metadata) Apply(info *tusd.FileInfo) tusd.FileInfo {
