@@ -5,12 +5,13 @@ package common
 import (
 	"context"
 	"database/sql"
+	"net/http"
+	"time"
+
 	"github.com/indicosystems/proxy-common/metadata"
 	"github.com/sirupsen/logrus"
 	tusd "github.com/tus/tusd/pkg/handler"
 	"github.com/tus/tusd/pkg/s3store"
-	"net/http"
-	"time"
 )
 
 type S3Config struct {
@@ -257,7 +258,9 @@ type ValidateNullableResponse struct {
 	GroupID    *ValidateGroupResponse  `json:",omitempty"`
 }
 type ValidateCaseResponse struct {
-	ID string
+	ID      string `json:",omitempty"`
+	Name    string `json:",omitempty"`
+	Details string `json:",omitempty"`
 }
 
 type ValidateParentResponse struct {
