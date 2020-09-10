@@ -263,22 +263,23 @@ func NewValidationError(status string, statusCode int, details map[string]string
 }
 
 type ValidateNullableResponse struct {
-	Error      *ValidationErrorResponse
-	UserID     *ValidateUserResponse   `json:",omitempty"`
-	UserName   *ValidateUserResponse   `json:",omitempty"`
-	Sid        *ValidateUserResponse   `json:",omitempty"`
-	ParentID   *ValidateParentResponse `json:",omitempty"`
-	ParentName *ValidateParentResponse `json:",omitempty"`
-	CaseID     *ValidateCaseResponse   `json:",omitempty"`
-	CaseName   *ValidateCaseResponse   `json:",omitempty"`
-	GroupName  *ValidateGroupResponse  `json:",omitempty"`
-	GroupID    *ValidateGroupResponse  `json:",omitempty"`
+	Error      *ValidationErrorResponse `json:",omitempty"`
+	UserID     *ValidateUserResponse    `json:",omitempty"`
+	UserName   *ValidateUserResponse    `json:",omitempty"`
+	Sid        *ValidateUserResponse    `json:",omitempty"`
+	ParentID   *ValidateParentResponse  `json:",omitempty"`
+	ParentName *ValidateParentResponse  `json:",omitempty"`
+	CaseID     *ValidateCaseResponse    `json:",omitempty"`
+	CaseName   *ValidateCaseResponse    `json:",omitempty"`
+	GroupName  *ValidateGroupResponse   `json:",omitempty"`
+	GroupID    *ValidateGroupResponse   `json:",omitempty"`
 }
 type ValidateCaseResponse struct {
 	Error   *ValidationErrorResponse
 	ID      string `json:",omitempty"`
 	Name    string `json:",omitempty"`
 	Details string `json:",omitempty"`
+	Private bool
 }
 
 type ValidateParentResponse struct {
