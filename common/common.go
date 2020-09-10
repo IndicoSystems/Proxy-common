@@ -250,9 +250,18 @@ type ValidateResponse struct {
 
 type ValidationErrorResponse struct {
 	Status     string
-	StatusCode string
+	StatusCode int
 	Details    map[string]string
 }
+
+func NewValidationError(status string, statusCode int, details map[string]string) ValidationErrorResponse {
+	return ValidationErrorResponse{
+		StatusCode: statusCode,
+		Status:     status,
+		Details:    details,
+	}
+}
+
 type ValidateNullableResponse struct {
 	Error      *ValidationErrorResponse
 	UserID     *ValidateUserResponse   `json:",omitempty"`
