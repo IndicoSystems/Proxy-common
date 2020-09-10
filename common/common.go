@@ -301,15 +301,15 @@ type ValidateUserResponse struct {
 }
 
 type ValidatePayload struct {
-	UserId     string
+	UserID     string
 	UserName   string
 	Sid        string
-	ParentId   string
+	ParentID   string
 	ParentName string
-	CaseId     string
+	CaseID     string
 	CaseName   string
 	GroupName  string
-	GroupId    string
+	GroupID    string
 }
 
 type SearchResultItem struct {
