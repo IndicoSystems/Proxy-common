@@ -209,6 +209,7 @@ type MetadataWriter interface {
 
 // Can be used by clients to validate that their input is valid before submitting data.
 type Validator interface {
+	// Validate should normally not error, but instead return error in the key of each validation-response
 	Validate(r *http.Request, a AuthenticationPayload, v ValidatePayload) (ValidateResponse, error)
 }
 
@@ -246,7 +247,14 @@ type ValidateResponse struct {
 	GroupName  ValidateGroupResponse
 	GroupID    ValidateGroupResponse
 }
+
+type ValidationErrorResponse struct {
+	Status     string
+	StatusCode string
+	Details    map[string]string
+}
 type ValidateNullableResponse struct {
+	Error      *ValidationErrorResponse
 	UserID     *ValidateUserResponse   `json:",omitempty"`
 	UserName   *ValidateUserResponse   `json:",omitempty"`
 	Sid        *ValidateUserResponse   `json:",omitempty"`
@@ -258,21 +266,25 @@ type ValidateNullableResponse struct {
 	GroupID    *ValidateGroupResponse  `json:",omitempty"`
 }
 type ValidateCaseResponse struct {
+	Error   *ValidationErrorResponse
 	ID      string `json:",omitempty"`
 	Name    string `json:",omitempty"`
 	Details string `json:",omitempty"`
 }
 
 type ValidateParentResponse struct {
-	ID string
+	Error *ValidationErrorResponse
+	ID    string
 }
 type ValidateGroupResponse struct {
-	ID   string
-	Gid  string
-	Name string
+	Error *ValidationErrorResponse
+	ID    string
+	Gid   string
+	Name  string
 }
 
 type ValidateUserResponse struct {
+	Error    *ValidationErrorResponse
 	ID       string
 	UserName string
 	AuthID   string
