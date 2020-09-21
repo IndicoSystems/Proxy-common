@@ -255,10 +255,11 @@ type ValidationErrorResponse struct {
 	//Details    map[string]string
 }
 
-func NewValidationError(status string, statusCode int, details map[string]string) ValidationErrorResponse {
+func NewValidationError(status string, statusCode int, response LocalizedResponse) ValidationErrorResponse {
 	return ValidationErrorResponse{
-		StatusCode: statusCode,
-		Status:     status,
+		LocalizedResponse: response,
+		StatusCode:        statusCode,
+		Status:            status,
 	}
 }
 
