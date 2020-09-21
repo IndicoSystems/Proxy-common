@@ -249,16 +249,16 @@ type ValidateResponse struct {
 }
 
 type ValidationErrorResponse struct {
+	LocalizedResponse
 	Status     string
 	StatusCode int
-	Details    map[string]string
+	//Details    map[string]string
 }
 
 func NewValidationError(status string, statusCode int, details map[string]string) ValidationErrorResponse {
 	return ValidationErrorResponse{
 		StatusCode: statusCode,
 		Status:     status,
-		Details:    details,
 	}
 }
 
@@ -274,12 +274,37 @@ type ValidateNullableResponse struct {
 	GroupName  *ValidateGroupResponse   `json:",omitempty"`
 	GroupID    *ValidateGroupResponse   `json:",omitempty"`
 }
+
 type ValidateCaseResponse struct {
-	Error   *ValidationErrorResponse
-	ID      string `json:",omitempty"`
-	Name    string `json:",omitempty"`
-	Details string `json:",omitempty"`
-	Private bool
+	LocalizedResponse
+	Error     *ValidationErrorResponse
+	ID        string `json:",omitempty"`
+	Name      string `json:",omitempty"`
+	Private   bool
+	Sensitive bool
+}
+
+type LocalizedResponse struct {
+	// For use as header, etc
+	Title    string
+	Subtitle string
+	// For use as additional field-information
+	Details []Localizable
+}
+
+type Localizable struct {
+	// Raw key, for use with data
+	RawKey string
+	// Raw value, for use with data
+	RawValue string
+	// Localized key
+	Key string
+	// Localized value
+	Value string
+}
+
+type KeyVal struct {
+	Key, Value string
 }
 
 type ValidateParentResponse struct {
