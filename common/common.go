@@ -237,22 +237,21 @@ type SupportedValidation struct {
 }
 
 type ValidateResponse struct {
-	UserID     ValidateUserResponse
-	UserName   ValidateUserResponse
-	Sid        ValidateUserResponse
-	ParentID   ValidateParentResponse
-	ParentName ValidateParentResponse
-	CaseID     ValidateCaseResponse
-	CaseName   ValidateCaseResponse
-	GroupName  ValidateGroupResponse
-	GroupID    ValidateGroupResponse
+	UserID     ValidateUserResponse   `json:",omitempty"`
+	UserName   ValidateUserResponse   `json:",omitempty"`
+	Sid        ValidateUserResponse   `json:",omitempty"`
+	ParentID   ValidateParentResponse `json:",omitempty"`
+	ParentName ValidateParentResponse `json:",omitempty"`
+	CaseID     ValidateCaseResponse   `json:",omitempty"`
+	CaseName   ValidateCaseResponse   `json:",omitempty"`
+	GroupName  ValidateGroupResponse  `json:",omitempty"`
+	GroupID    ValidateGroupResponse  `json:",omitempty"`
 }
 
 type ValidationErrorResponse struct {
-	LocalizedResponse
-	Status     string
-	StatusCode int
-	//Details    map[string]string
+	LocalizedResponse `json:",omitempty"`
+	Status            string `json:",omitempty"`
+	StatusCode        int    `json:",omitempty"`
 }
 
 func NewValidationError(status string, statusCode int, response LocalizedResponse) ValidationErrorResponse {
@@ -287,8 +286,8 @@ type ValidateCaseResponse struct {
 
 type LocalizedResponse struct {
 	// For use as header, etc
-	Title    string
-	Subtitle string
+	Title    string `json:",omitempty"`
+	Subtitle string `json:",omitempty"`
 	// For use as additional field-information
 	Details []Localizable
 }
@@ -304,38 +303,34 @@ type Localizable struct {
 	Value string
 }
 
-type KeyVal struct {
-	Key, Value string
-}
-
 type ValidateParentResponse struct {
-	Error *ValidationErrorResponse
-	ID    string
+	Error *ValidationErrorResponse `json:",omitempty"`
+	ID    string                   `json:",omitempty"`
 }
 type ValidateGroupResponse struct {
-	Error *ValidationErrorResponse
-	ID    string
-	Gid   string
-	Name  string
+	Error *ValidationErrorResponse `json:",omitempty"`
+	ID    string                   `json:",omitempty"`
+	Gid   string                   `json:",omitempty"`
+	Name  string                   `json:",omitempty"`
 }
 
 type ValidateUserResponse struct {
-	Error    *ValidationErrorResponse
-	ID       string
-	UserName string
-	AuthID   string
+	Error    *ValidationErrorResponse `json:",omitempty"`
+	ID       string                   `json:",omitempty"`
+	UserName string                   `json:",omitempty"`
+	AuthID   string                   `json:",omitempty"`
 }
 
 type ValidatePayload struct {
-	UserID     string
-	UserName   string
-	Sid        string
-	ParentID   string
-	ParentName string
-	CaseID     string
-	CaseName   string
-	GroupName  string
-	GroupID    string
+	UserID     string `json:",omitempty"`
+	UserName   string `json:",omitempty"`
+	Sid        string `json:",omitempty"`
+	ParentID   string `json:",omitempty"`
+	ParentName string `json:",omitempty"`
+	CaseID     string `json:",omitempty"`
+	CaseName   string `json:",omitempty"`
+	GroupName  string `json:",omitempty"`
+	GroupID    string `json:",omitempty"`
 }
 
 type SearchResultItem struct {
