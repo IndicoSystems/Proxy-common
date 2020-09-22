@@ -276,12 +276,12 @@ type ValidateNullableResponse struct {
 }
 
 type ValidateCaseResponse struct {
-	LocalizedResponse
-	Error     *ValidationErrorResponse
-	ID        string `json:",omitempty"`
-	Name      string `json:",omitempty"`
-	Private   bool
-	Sensitive bool
+	LocalizedResponse `json:",omitempty"`
+	Error             *ValidationErrorResponse `json:",omitempty"`
+	ID                string                   `json:",omitempty"`
+	Name              string                   `json:",omitempty"`
+	Private           bool                     `json:",omitempty"`
+	Sensitive         bool                     `json:",omitempty"`
 }
 
 type LocalizedResponse struct {
