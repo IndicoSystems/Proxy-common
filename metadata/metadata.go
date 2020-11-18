@@ -31,10 +31,10 @@ const (
 	// The mime type of the file.
 	FileType = "filetype"
 
-	// A queue-id in an installations queue-system. Only valid for some systems, like Indico Gateway.
+	// A svcQueue-id in an installations svcQueue-system. Only valid for some systems, like Indico Gateway.
 	ServiceQueueId = "serviceQueueId"
 
-	// Deprecated ConnectorConfig, if needed for the queue-handling
+	// Deprecated ConnectorConfig, if needed for the svcQueue-handling
 	ConnectorConfig = "connectorConfig"
 
 	// The name given to the file by the user.
@@ -51,6 +51,8 @@ const (
 	// Indicates whether the upload is verfied as completed.
 	ExtUploaded  = "extUploaded"
 	ExtConfirmed = "extConfirmed"
+	// A checkSum calculated by the receiver
+	ReceiverChecksum = "receiverChecksum"
 
 	// The data available to all, as submitted by the Client
 	MUploadMetadata                   = "UploadMetadata"
@@ -123,6 +125,39 @@ func (m *Metadata) GetRaw(k string) string {
 }
 func (m *Metadata) GetRawMetadata() string {
 	return m.getExact(MUploadMetadata)
+}
+
+type CheckSum struct {
+	Value, Kind, Code, Notes string
+}
+
+func (m *Metadata) GetReceiverChecksum() (CheckSum, error) {
+	var cs CheckSum
+	s := m.getExact(ReceiverChecksum)
+	if s == "" {
+		return cs, nil
+	}
+	err := json.Unmarshal([]byte(s), &cs)
+	if err != nil {
+		return cs, fmt.Errorf("failed to unmarshal key '%s' from value '%s': %w", ReceiverChecksum, s, err)
+	}
+	return cs, nil
+}
+
+func (m *Metadata) SetReceiverChecksum(value, kind, code, notes string) (CheckSum, error) {
+	cs := CheckSum{
+		Value: value,
+		Kind:  kind,
+		Code:  code,
+		Notes: notes,
+	}
+	b, err := json.Marshal(cs)
+	if err != nil {
+		return cs, fmt.Errorf("failed to marshal key '%s' from value '%v': %w", ReceiverChecksum, cs, err)
+	}
+
+	m.set(ReceiverChecksum, string(b))
+	return cs, nil
 }
 func (m *Metadata) GetClientId() string {
 	return m.getExact(ClientId)

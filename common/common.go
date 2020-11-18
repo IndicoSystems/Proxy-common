@@ -68,7 +68,7 @@ type QueueItem struct {
 	Info tusd.FileInfo
 	// The kind of action that needs to be done, from the connector's perspective.
 	ActionType string
-	// How many attempts the queue-item has been trough.
+	// How many attempts the svcQueue-item has been trough.
 	Attempts int
 	// Any errors occured. Can be used to inform a sys-admin.
 	Error string
@@ -93,11 +93,11 @@ type QueueHandler interface {
 }
 
 type QueueRunResult struct {
-	// Set to true to mark the queue-item as complete
+	// Set to true to mark the svcQueue-item as complete
 	CompleteQueueItem bool
-	// Set to true to mark the upload as complete. Will also complete the queue-item
+	// Set to true to mark the upload as complete. Will also complete the svcQueue-item
 	CompleteUpload bool
-	// Set to true to make the queue back off on this item, and require manual intervention.
+	// Set to true to make the svcQueue back off on this item, and require manual intervention.
 	Backoff bool
 	// Additional info for the current error
 	Err string
