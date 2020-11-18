@@ -19,7 +19,13 @@ type S3Config struct {
 	AccessKey string
 	SecretKey string
 	Region    string
+	Options   S3ConfigOptions
 	s3store.S3Store
+}
+
+type S3ConfigOptions struct {
+	CalculateSha bool
+	VerifyMime   bool
 }
 
 type UploadCompleteStatus string
