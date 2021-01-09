@@ -181,6 +181,30 @@ func (um UploadMetadata) ConvertToMetaData() Metadata {
 	m.ReplaceUploadMetadata(um)
 	return m
 }
+func (um UploadMetadata) PrintFieldsSafely() map[string]interface{} {
+	return map[string]interface{}{
+		"Checksum":      um.Checksum,
+		"FileSize":      um.FileSize,
+		"ClientMediaId": um.ClientMediaId,
+		"FileType":      um.FileType,
+		"ExtId":         um.ExtId,
+		"UserID":        um.UserId,
+	}
+}
+func (um UploadMetadata) PrintFieldsDebug() map[string]interface{} {
+	fields := um.PrintFieldsSafely()
+	fields["GroupId"] = um.GroupId
+	fields["CaseNumber"] = um.CaseNumber
+	fields["Parent"] = um.Parent
+	fields["AdLogin"] = um.AdLogin
+	fields["AdSid"] = um.AdSid
+	fields["Creator"] = um.Creator
+	fields["DisplayName"] = um.DisplayName
+	fields["Duration"] = um.Duration
+	fields["Subject"] = um.Subject
+	fields["Tags"] = um.Tags
+	return fields
+}
 
 func createDate(y int, m time.Month, d int) *time.Time {
 	date := time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
