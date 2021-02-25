@@ -150,6 +150,8 @@ type QueueStorer interface {
 }
 
 type AuthenticationPayload struct {
+	// Bearer AuthenticationPayload
+	Bearer,
 	// Used to authenticate the request.
 	ClientId,
 	// Used to authenticate the request
