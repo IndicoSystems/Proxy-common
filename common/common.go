@@ -45,6 +45,7 @@ type Persistence interface {
 	Get(k string, v interface{}) (found bool, err error)
 	SetReceiverChecksum(id string, checkSum metadata.CheckSum) error
 	SetTemporaryChecksum(id string, checkSum []byte) error
+	GetTemporaryChecksum(id string) ([]byte, error)
 	GetTusdInfo(id string) (*tusd.FileInfo, bool)
 	GetTusdInfos(ids []string) ([]*tusd.FileInfo, error)
 	// Should only be used to create the info
