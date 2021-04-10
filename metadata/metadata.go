@@ -24,8 +24,9 @@ const (
 	AsUserActiveDirectorySid = "as-user-sid"
 
 	// The name of the container the file belongs to.
-	ParentName = "parentname"
-	SSN        = "__ssn"
+	ParentName        = "parentname"
+	SSN               = "__ssn"
+	NoMetadataMapping = "__no_metadata_mapping"
 
 	ClientMediaId = "client-media-id"
 	// The mime type of the file.
@@ -58,6 +59,8 @@ const (
 	MUploadMetadata                   = "UploadMetadata"
 	ClientMessages                    = "ClientMessages"
 	CaseNumberIgnored InternalInfoStr = "CaseNumberIgnored"
+	_true                             = "true"
+	_false                            = "false"
 )
 
 type InternalInfoStr string
@@ -123,6 +126,9 @@ func (m *Metadata) GetUploadMetadata() UploadMetadata {
 func (m *Metadata) GetRaw(k string) string {
 	return m.getExact(k)
 }
+func (m *Metadata) SetRaw(k string, value string) {
+	m.set(k, value)
+}
 func (m *Metadata) GetRawMetadata() string {
 	return m.getExact(MUploadMetadata)
 }
@@ -167,6 +173,16 @@ func (m *Metadata) GetReqId() string {
 }
 func (m *Metadata) SetReqId(reqid string) {
 	m.set(ReqId, reqid)
+}
+func (m *Metadata) GetNoMetadataMapping() bool {
+	return m.getExact(NoMetadataMapping) == _true
+}
+func (m *Metadata) SetNoMetadataMapping(boolean bool) {
+	if boolean {
+		m.set(NoMetadataMapping, _true)
+		return
+	}
+	m.set(NoMetadataMapping, _false)
 }
 func (m *Metadata) SetServiceQueueId(qID string) {
 	m.set(ServiceQueueId, qID)
@@ -274,10 +290,10 @@ func (m *Metadata) GetExtParentId() string {
 	return m.getExact(ExtParentId)
 }
 func (m *Metadata) GetExtUploaded() bool {
-	return m.getExact(ExtUploaded) == "true"
+	return m.getExact(ExtUploaded) == _true
 }
 func (m *Metadata) GetExtConfirmed() bool {
-	return m.getExact(ExtConfirmed) == "true"
+	return m.getExact(ExtConfirmed) == _true
 }
 func (m *Metadata) GetErrorMessage() string {
 	return m.getExact(ErrorMessage)
@@ -294,11 +310,11 @@ func (m *Metadata) SetExtId(d string) {
 	m.ReplaceUploadMetadata(um)
 }
 func (m *Metadata) SetExtUploaded() *Metadata {
-	m.set(ExtUploaded, "true")
+	m.set(ExtUploaded, _true)
 	return m
 }
 func (m *Metadata) SetExtConfirmed() *Metadata {
-	m.set(ExtConfirmed, "true")
+	m.set(ExtConfirmed, _true)
 	return m
 }
 func (m *Metadata) Apply(info *tusd.FileInfo) tusd.FileInfo {
