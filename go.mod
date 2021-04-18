@@ -1,6 +1,6 @@
 module github.com/indicosystems/proxy-common
 
-go 1.13
+go 1.16
 
 require (
 	github.com/go-test/deep v1.0.6

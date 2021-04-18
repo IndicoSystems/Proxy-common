@@ -118,7 +118,7 @@ type QueueRunResult struct {
 //
 // Typical use-cases here are creating album/folder, some extra validation if needed
 type NewUploadInitiator interface {
-	InitiateNewUpload(data *metadata.Metadata) error
+	InitiateNewUpload(ctx context.Context, data *metadata.Metadata) error
 }
 
 // Will be called after the actual upload is completed (tusd.DataStore.Upload.FinishUpload)
