@@ -209,11 +209,11 @@ type Authenticator interface {
 
 // Helpful function during development/mappers.
 type DryRunner interface {
-	DryRun(mdata metadata.Metadata) error
+	DryRun(ctx context.Context, mdata metadata.Metadata) error
 }
 
 type MetadataWriter interface {
-	OutputMetadata(info tusd.FileInfo) ([]byte, string, error)
+	OutputMetadata(ctx context.Context, info tusd.FileInfo) ([]byte, string, error)
 }
 
 // Can be used by clients to validate that their input is valid before submitting data.
