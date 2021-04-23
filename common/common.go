@@ -89,6 +89,7 @@ type QueueItem struct {
 
 type StoreCreator interface {
 	CreateS3Store(S3Config) (DataStore, error)
+	CreateFileStore(dir string) (DataStore, error)
 }
 
 type HealthReporter interface {
@@ -172,6 +173,7 @@ type UploadResult struct {
 	ClientMediaId    string `json:"ClientId"`
 }
 
+// Deprecated, please use context-package instead
 func (a *AuthenticationPayload) SetAuthenticationPayloadOnMetadata(m *metadata.Metadata) *metadata.Metadata {
 	if a.ClientId != "" {
 		m.SetClientId(a.ClientId)
