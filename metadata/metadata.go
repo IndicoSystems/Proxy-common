@@ -19,6 +19,8 @@ const (
 	ClientId                 = "client-id"
 	ConnectorWritten         = "connector-written"
 	ReqId                    = "req-id"
+	TempChecksum             = "_tmp_checksum_"
+	PostponeStatus           = "postpone-status"
 	AsUserName               = "as-username"
 	AsUserId                 = "as-user-id"
 	AsUserActiveDirectorySid = "as-user-sid"
@@ -167,6 +169,34 @@ func (m *Metadata) SetReceiverChecksum(value, kind, code, notes string) (CheckSu
 }
 func (m *Metadata) GetClientId() string {
 	return m.getExact(ClientId)
+}
+
+type postponedStatus = string
+
+const (
+	PostponedInit           postponedStatus = "init"
+	PostponedUploadComplete postponedStatus = "uploadComplete"
+	PostponedMetaComplete   postponedStatus = "metaComplete"
+	PostponedAllComplete    postponedStatus = "allComplete"
+)
+
+func (m *Metadata) GetPostponedStatus() postponedStatus {
+	return m.getExact(PostponeStatus)
+}
+func (m *Metadata) SetPostponedStatus(status postponedStatus) error {
+	switch status {
+	case PostponedAllComplete, PostponedUploadComplete, PostponedMetaComplete, PostponedInit:
+	default:
+		return fmt.Errorf("postponed-status not valid: '%s' for uploadID '%s'", status, id)
+	}
+
+	m.set(PostponeStatus, status)
+}
+func (m *Metadata) GetTemporaryChecksum() string {
+	return m.getExact(TempChecksum)
+}
+func (m *Metadata) SetTemporaryChecksum(reqid string) {
+	m.set(TempChecksum, reqid)
 }
 func (m *Metadata) GetReqId() string {
 	return m.getExact(ReqId)
