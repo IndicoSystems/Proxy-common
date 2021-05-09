@@ -187,7 +187,7 @@ func (m *Metadata) SetPostponedStatus(status postponedStatus) error {
 	switch status {
 	case PostponedAllComplete, PostponedUploadComplete, PostponedMetaComplete, PostponedInit:
 	default:
-		return fmt.Errorf("postponed-status not valid: '%s' for uploadID '%s'", status, id)
+		return fmt.Errorf("postponed-status not valid: '%s'", status)
 	}
 
 	m.set(PostponeStatus, status)
