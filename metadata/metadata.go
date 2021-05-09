@@ -191,6 +191,7 @@ func (m *Metadata) SetPostponedStatus(status postponedStatus) error {
 	}
 
 	m.set(PostponeStatus, status)
+	return nil
 }
 func (m *Metadata) GetTemporaryChecksum() string {
 	return m.getExact(TempChecksum)
