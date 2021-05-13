@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// The root-metadata
+// UploadMetadata is the internal representation for Metadata on uploads.
 //
 // All time.time-objects should be ISO-8601-compliant, and include the clients time-offset.
 // The required metadata depends on the client, and can be retrieved by either visiting Proxy in the browser
@@ -61,10 +61,10 @@ type UploadMetadata struct {
 	// TBD
 	EquipmentId string `json:"equipmentId"`
 	// TBD
-	InterviewType   string           `json:"interviewType"`
-	Bookmarks       []Bookmark       `json:"bookmarks"`
-	RecordingEvents []RecordingEvent `json:"bookmarks"`
-	Annotations     []Annotation     `json:"annotations"`
+	InterviewType   string          `json:"interviewType"`
+	Bookmarks       []Bookmark      `json:"bookmarks"`
+	RecordingEvents RecordingEvents `json:"recordingEvents"`
+	Annotations     []Annotation    `json:"annotations"`
 	// TBD
 	Notes string `json:"notes"`
 	// A unique identifier of the file on the client.
@@ -79,15 +79,27 @@ type UploadMetadata struct {
 	Transcription []Utterance `json:"transcription"`
 }
 
+// RecordingEvent uses
 type RecordingEvent struct {
-	Id         string
-	Kind       EventKind
-	Start      time.Time
+	Id string
+	// Optional
+	Title string
+	// Optional
+	Description string
+	// Required
+	Kind EventKind
+	// Required
+	Start time.Time
+	// Optional
 	StartFrame int64
-	End        *time.Time
-	EndFrame   *int64
-	EndKind    *EventKind
-	EndId      *string
+	// Optional
+	End *time.Time
+	// Optional
+	EndFrame *int64
+	// Optional
+	EndKind *EventKind
+	// Optional
+	EndId *string
 }
 
 type EventKind string
@@ -138,13 +150,15 @@ outer:
 			}
 		}
 		newEvent := RecordingEvent{
-			Id:         current.Id,
-			Kind:       current.Kind,
-			Start:      current.Start,
-			StartFrame: current.StartFrame,
-			End:        *(&current.End),
-			EndFrame:   *(&current.EndFrame),
-			EndKind:    *(&current.EndKind),
+			Id:          current.Id,
+			Title:       current.Title,
+			Description: current.Description,
+			Kind:        current.Kind,
+			Start:       current.Start,
+			StartFrame:  current.StartFrame,
+			End:         *(&current.End),
+			EndFrame:    *(&current.EndFrame),
+			EndKind:     *(&current.EndKind),
 		}
 		switch current.Kind {
 		// Only these events can have an ending
