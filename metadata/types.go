@@ -2,6 +2,8 @@ package metadata
 
 import (
 	"encoding/xml"
+	"errors"
+	"fmt"
 	"strings"
 	"time"
 )
@@ -59,9 +61,10 @@ type UploadMetadata struct {
 	// TBD
 	EquipmentId string `json:"equipmentId"`
 	// TBD
-	InterviewType string       `json:"interviewType"`
-	Bookmarks     []Bookmark   `json:"bookmarks"`
-	Annotations   []Annotation `json:"annotations"`
+	InterviewType   string           `json:"interviewType"`
+	Bookmarks       []Bookmark       `json:"bookmarks"`
+	RecordingEvents []RecordingEvent `json:"bookmarks"`
+	Annotations     []Annotation     `json:"annotations"`
 	// TBD
 	Notes string `json:"notes"`
 	// A unique identifier of the file on the client.
@@ -76,12 +79,100 @@ type UploadMetadata struct {
 	Transcription []Utterance `json:"transcription"`
 }
 
+type RecordingEvent struct {
+	Id         string
+	Kind       EventKind
+	Start      time.Time
+	StartFrame int64
+	End        *time.Time
+	EndFrame   *int64
+	EndKind    *EventKind
+	EndId      *string
+}
+
+type EventKind string
+type RecordingEvents []RecordingEvent
 type UtteranceType string
 
 const (
-	Saying UtteranceType = "Saying"
-	Event  UtteranceType = "Event"
+	RecordingEventRecording    EventKind     = "Recording"
+	RecordingEventIncomingCall EventKind     = "IncomingCall"
+	RecordingEventLowPower     EventKind     = "LowPower"
+	RecordingEventLowMemory    EventKind     = "LowMemory"
+	RecordingEventFatal        EventKind     = "Fatal"
+	RecordingEventUnknown      EventKind     = "Unknown"
+	RecordingEventUserEnded    EventKind     = "UserEnded"
+	RecordingEventStarted      EventKind     = "Started"
+	RecordingEventPaused       EventKind     = "Paused"
+	Saying                     UtteranceType = "Saying"
+	Event                      UtteranceType = "Event"
 )
+
+var (
+	ErrRecordingEventInvalidOrder error = errors.New("the order of the events are logically correct")
+)
+
+func (re RecordingEvents) WithEndingsIgnoreErr() RecordingEvents {
+	RE, _ := re.WithEndings()
+	return RE
+}
+
+// Returns a new compact RecordingEvents by combining RecordingEvents which belong together in Start/End
+// If the events are already using the End-fields, this has no effect
+func (re RecordingEvents) WithEndings() (RecordingEvents, error) {
+	if len(re) <= 1 {
+		return re, nil
+	}
+	RE := RecordingEvents{}
+	var skipIndexex []int
+	//last := re[len(re)-1]
+outer:
+	for i, current := range re {
+		if current.End != nil {
+			continue
+		}
+		// Some elements, like Pause should be skipped if Endtime is already put into the Starting type
+		for _, indexex := range skipIndexex {
+			if i == indexex {
+				continue outer
+			}
+		}
+		newEvent := RecordingEvent{
+			Id:         current.Id,
+			Kind:       current.Kind,
+			Start:      current.Start,
+			StartFrame: current.StartFrame,
+			End:        *(&current.End),
+			EndFrame:   *(&current.EndFrame),
+			EndKind:    *(&current.EndKind),
+		}
+		switch current.Kind {
+		// Only these events can have an ending
+		case RecordingEventRecording, RecordingEventStarted:
+			break
+		default:
+			RE = append(RE, newEvent)
+			continue
+		}
+		// Loop from the next item to the end, looking for ends for these events
+		for j := i + 1; j < len(re); j++ {
+			next := re[j]
+			switch next.Kind {
+			case RecordingEventRecording, RecordingEventStarted:
+				return RE, fmt.Errorf("%w %s cannot follow %s without a RecordingEvent between closing the first current", ErrRecordingEventInvalidOrder, next.Kind, current.Kind)
+			}
+			skipIndexex = append(skipIndexex, j)
+			newEvent.EndKind = &next.Kind
+			newEvent.EndFrame = &next.StartFrame
+			newEvent.End = &next.Start
+			newEvent.EndId = &next.Id
+			RE = append(RE, newEvent)
+			break
+		}
+
+	}
+	return RE, nil
+}
 
 type Utterance struct {
 	Type      UtteranceType `json:"type"`
@@ -215,10 +306,10 @@ func CreateSampleData() UploadMetadata {
 	now := time.Now().Round(time.Second)
 	//dob := time.Date(1951, 11, 4, 0, 0, 0, 0, time.UTC)
 	um := UploadMetadata{
-		"user",
-		"S-1-5-21-1111111111-2222222222-333333333-1001",
-		"user@domainame",
-		Parent{
+		UserId:  "user",
+		AdSid:   "S-1-5-21-1111111111-2222222222-333333333-1001",
+		AdLogin: "user@domainame",
+		Parent: Parent{
 			"all-metadata-test",
 			"",
 			"Burglar",
@@ -226,16 +317,16 @@ func CreateSampleData() UploadMetadata {
 			&now,
 			&now,
 		},
-		&now,
-		&now,
-		&now,
-		&now,
-		&now,
-		"video/mp4",
-		16822,
-		"Interview with witness",
-		"Witness describing the event",
-		[]MetaChecksum{
+		CreatedAt:   &now,
+		UpdatedAt:   &now,
+		ArchiveAt:   &now,
+		CompletedAt: &now,
+		CapturedAt:  &now,
+		FileType:    "video/mp4",
+		FileSize:    16822,
+		DisplayName: "Interview with witness",
+		Description: "Witness describing the event",
+		Checksum: []MetaChecksum{
 			{
 				"c013d16a335e2e40edf7d91d2c1f48930e52f3b76a5347010ed25a2334cee872",
 				"SHA256",
@@ -245,12 +336,12 @@ func CreateSampleData() UploadMetadata {
 				"SHA3-256",
 			},
 		},
-		"recording-123.mp4",
-		[]string{"robbery", "masked", "villain"},
-		"1234",
-		"C6288",
-		int64((44*time.Minute + 8*time.Second + 36*time.Millisecond) / time.Millisecond),
-		Creator{
+		FileName:   "recording-123.mp4",
+		Tags:       []string{"robbery", "masked", "villain"},
+		ExtId:      "1234",
+		CaseNumber: "C6288",
+		Duration:   int64((44*time.Minute + 8*time.Second + 36*time.Millisecond) / time.Millisecond),
+		Creator: Creator{
 			"Downtown district",
 			map[string]string{
 				"any-string": "is allowed",
@@ -282,7 +373,7 @@ func CreateSampleData() UploadMetadata {
 				},
 			},
 		},
-		Location{
+		Location: Location{
 			"The yellow house down the street",
 			1.23456,
 			2.34567,
@@ -294,7 +385,7 @@ func CreateSampleData() UploadMetadata {
 			44.0,
 			8,
 		},
-		[]Person{
+		Subject: []Person{
 			{
 				"Burger",
 				"Beagle",
@@ -348,9 +439,9 @@ func CreateSampleData() UploadMetadata {
 				},
 			},
 		},
-		"iPhone 20",
-		"Witness",
-		[]Bookmark{
+		EquipmentId:   "iPhone 20",
+		InterviewType: "Witness",
+		Bookmarks: []Bookmark{
 			{
 				now,
 				"abc123",
@@ -359,7 +450,25 @@ func CreateSampleData() UploadMetadata {
 				112000,
 			},
 		},
-		[]Annotation{{
+		RecordingEvents: RecordingEvents{
+			{
+				Kind:  RecordingEventRecording,
+				Start: *createDate(2021, 5, 12),
+			},
+			{
+				Kind:  RecordingEventPaused,
+				Start: createDate(2021, 5, 12).Add(4 * time.Minute),
+			},
+			{
+				Kind:  RecordingEventStarted,
+				Start: createDate(2021, 5, 12).Add(20 * time.Minute),
+			},
+			{
+				Kind:  RecordingEventUserEnded,
+				Start: createDate(2021, 5, 12).Add(1 * time.Hour),
+			},
+		}.WithEndingsIgnoreErr(),
+		Annotations: []Annotation{{
 			now,
 			"abc",
 			"abc",
@@ -374,11 +483,11 @@ func CreateSampleData() UploadMetadata {
 			18000,
 			32000,
 		}},
-		"Daisy witnessed the crime, and says she identified Burgar Beagle.",
-		"abc123",
-		"multicapture:12345",
-		"MutlipleViews",
-		[]FormFields{
+		Notes:         "Daisy witnessed the crime, and says she identified Burgar Beagle.",
+		ClientMediaId: "abc123",
+		GroupId:       "multicapture:12345",
+		GroupName:     "MutlipleViews",
+		FormFields: []FormFields{
 			{
 				"clothing",
 				"c12422D3",
@@ -419,7 +528,7 @@ func CreateSampleData() UploadMetadata {
 				},
 			},
 		},
-		[]Utterance{
+		Transcription: []Utterance{
 			{
 				Saying,
 				Person{
