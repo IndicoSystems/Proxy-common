@@ -129,13 +129,14 @@ type UploadCompleter interface {
 }
 
 type GetAllOptions struct {
-	ID          string
-	Limit       int
-	ConnectorId string
-	ActionType  string
-	DueBefore   sql.NullTime
-	DueAfter    sql.NullTime
-	OnlyDue     bool
+	ID               string
+	Limit            int
+	ConnectorId      string
+	ActionType       string
+	IncludeBackedOff bool
+	DueBefore        sql.NullTime
+	DueAfter         sql.NullTime
+	OnlyDue          bool
 }
 
 type QueueOptions struct {
