@@ -1,3 +1,8 @@
+> Proxy-Common has for development purposes been included in the main-Proxy-package.
+> This means that the current documentation is no longer publicly available.
+> 
+> However, we are uncluding the documentation with every installation of Proxy.
+
 # Indico Proxy common
 
 This project holds common resources and interfaces for Indico Proxy, and its connectors. These are meant to be resources for independent connectors for Proxy.
